@@ -1,17 +1,17 @@
 /* packet-nano.c
- * Routines for Nano / RaiBlocks dissection
- * Copyright 2018, Roland Haenel <roland@haenel.me>
- *
- * Wireshark - Network traffic analyzer
- * By Gerald Combs <gerald@wireshark.org>
- * Copyright 1998 Gerald Combs
- *
- * SPDX-License-Identifier: GPL-2.0-or-later
- */
+* Routines for Nano / RaiBlocks dissection
+* Copyright 2018, Roland Haenel <roland@haenel.me>
+*
+* Wireshark - Network traffic analyzer
+* By Gerald Combs <gerald@wireshark.org>
+* Copyright 1998 Gerald Combs
+*
+* SPDX-License-Identifier: GPL-2.0-or-later
+*/
 
 /*
- * For information about Nano / RaiBlocks, go to http://www.nano.org
- */
+* For information about Nano / RaiBlocks, go to http://www.nano.org
+*/
 
 #include <config.h>
 
@@ -126,14 +126,14 @@ static const value_string nano_packet_type_strings[] = {
 #define NANO_BLOCK_TYPE_STATE 6
 
 static const value_string nano_block_type_strings[] = {
-  { NANO_BLOCK_TYPE_INVALID, "Invalid" },
-  { NANO_BLOCK_TYPE_NOT_A_BLOCK, "Not A Block" },
-  { NANO_BLOCK_TYPE_SEND, "Send" },
-  { NANO_BLOCK_TYPE_RECEIVE, "Receive" },
-  { NANO_BLOCK_TYPE_OPEN, "Open" },
-  { NANO_BLOCK_TYPE_CHANGE, "Change" },
-  { NANO_BLOCK_TYPE_STATE, "State" },
-  { 0, NULL },
+    { NANO_BLOCK_TYPE_INVALID, "Invalid" },
+    { NANO_BLOCK_TYPE_NOT_A_BLOCK, "Not A Block" },
+    { NANO_BLOCK_TYPE_SEND, "Send" },
+    { NANO_BLOCK_TYPE_RECEIVE, "Receive" },
+    { NANO_BLOCK_TYPE_OPEN, "Open" },
+    { NANO_BLOCK_TYPE_CHANGE, "Change" },
+    { NANO_BLOCK_TYPE_STATE, "State" },
+    { 0, NULL },
 };
 
 static const string_string nano_magic_numbers[] = {
@@ -148,13 +148,12 @@ static const string_string nano_magic_numbers[] = {
 #define NANO_BULK_PULL_BLOCKS_MODE_CHECKSUM_BLOCKS 1
 
 static const value_string nano_bulk_pull_blocks_mode_strings[] = {
-  { NANO_BULK_PULL_BLOCKS_MODE_LIST_BLOCKS, "List Blocks" },
-  { NANO_BULK_PULL_BLOCKS_MODE_CHECKSUM_BLOCKS, "Checksum Blocks" },
-  { 0, NULL },
+    { NANO_BULK_PULL_BLOCKS_MODE_LIST_BLOCKS, "List Blocks" },
+    { NANO_BULK_PULL_BLOCKS_MODE_CHECKSUM_BLOCKS, "Checksum Blocks" },
+    { 0, NULL },
 };
 
-#define NANO_UDP_PORT 17075 /* Not IANA registered */
-#define NANO_TCP_PORT 17075 /* Not IANA registered */
+#define NANO_TCP_PORT 7075 /* Not IANA registered */
 
 #define NANO_BLOCK_SIZE_SEND    (32+32+16+64+8)
 #define NANO_BLOCK_SIZE_RECEIVE (32+32+64+8)
@@ -170,7 +169,6 @@ struct nano_session_state {
     int client_packet_type;
     guint32 server_port;
 };
-
 
 // dissect the inside of a keepalive packet (that is, the neighbor nodes)
 static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset)
@@ -198,11 +196,11 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
         if (!memcmp(&ip_addr, "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16)) {
             proto_item_append_text(ti, ": (none)");
         } else if (!memcmp(&ip_addr, "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xff\xff", 12)) {
-            ip_to_str_buf((gchar *) &ip_addr + 12, buf, sizeof(buf));
+            // ip_to_str_buf((gchar *) &ip_addr + 12, buf, sizeof(buf));
             proto_item_append_text(ti, ": %s:%d", buf, port);
             peers++;
         } else {
-            ip6_to_str_buf(&ip_addr, buf, sizeof(buf));
+            // ip6_to_str_buf(&ip_addr, buf, sizeof(buf));
             proto_item_append_text(ti, ": [%s]:%d", buf, port);
             peers++;
         }
@@ -357,6 +355,10 @@ static int dissect_nano_vote(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
     return offset;
 }
 
+static int dissect_nano_extensions_header() {
+
+}
+
 // dissect a Nano protocol header, fills in the values
 // for nano_packet_type, nano_block_type
 static int dissect_nano_header(tvbuff_t *tvb, proto_tree *nano_tree, int offset, guint *nano_packet_type, guint64 *extensions)
@@ -372,7 +374,7 @@ static int dissect_nano_header(tvbuff_t *tvb, proto_tree *nano_tree, int offset,
 
     nano_magic_number = tvb_get_string_enc(wmem_packet_scope(), tvb, offset, 2, ENC_ASCII);
     proto_tree_add_string_format_value(header_tree, hf_nano_magic_number, tvb, 0,
-            2, nano_magic_number, "%s (%s)", str_to_str(nano_magic_number, nano_magic_numbers, "Unknown"), nano_magic_number);
+        2, nano_magic_number, "%s (%s)", str_to_str(nano_magic_number, nano_magic_numbers, "Unknown"), nano_magic_number);
     offset += 2;
 
     proto_tree_add_item(header_tree, hf_nano_version_max, tvb, offset, 1, ENC_NA);
@@ -393,7 +395,147 @@ static int dissect_nano_header(tvbuff_t *tvb, proto_tree *nano_tree, int offset,
     return offset;
 }
 
-// dissect a Nano packet (UDP)
+static int dissect_nano_telemetry_req(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
+    col_add_fstr(pinfo->cinfo, COL_INFO, "Telemetry Req");
+
+    return 0;
+}
+
+static int hf_nano_telemetry_ack_signature = -1;
+static int hf_nano_telemetry_ack_nodeid = -1;
+static int hf_nano_telemetry_ack_blockcount = -1;
+static int hf_nano_telemetry_ack_cementedcount = -1;
+static int hf_nano_telemetry_ack_uncheckedcount = -1;
+static int hf_nano_telemetry_ack_accountcount = -1;
+static int hf_nano_telemetry_ack_bandwidthcap = -1;
+static int hf_nano_telemetry_ack_uptime = -1;
+static int hf_nano_telemetry_ack_peercount = -1;
+static int hf_nano_telemetry_ack_protocolversion = -1;
+static int hf_nano_telemetry_ack_genesisblock = -1;
+static int hf_nano_telemetry_ack_majorversion = -1;
+static int hf_nano_telemetry_ack_minorversion = -1;
+static int hf_nano_telemetry_ack_patchversion = -1;
+static int hf_nano_telemetry_ack_prereleaseversion = -1;
+static int hf_nano_telemetry_ack_maker = -1;
+static int hf_nano_telemetry_ack_timestamp = -1;
+static int hf_nano_telemetry_ack_activedifficulty = -1;
+
+static gint ett_nano_telemetry_ack = -1;
+
+static int dissect_nano_telemetry_ack(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
+    col_add_fstr(pinfo->cinfo, COL_INFO, "Telemetry Ack");
+
+    guint32 payload_size = extensions & 0x3ff;
+    proto_tree *telemetry_tree = proto_tree_add_subtree(nano_tree, tvb, offset, payload_size, ett_nano_telemetry_ack, NULL, "Telemetry Ack");
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_signature, tvb, offset, 64, ENC_BIG_ENDIAN);
+    offset += 64;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_nodeid, tvb, offset, 32, ENC_BIG_ENDIAN);
+    offset += 32;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_blockcount, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_cementedcount, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_uncheckedcount, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_accountcount, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_bandwidthcap, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_uptime, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_peercount, tvb, offset, 4, ENC_NA);
+    offset += 4;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_protocolversion, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_genesisblock, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_majorversion, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_minorversion, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_patchversion, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_prereleaseversion, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_maker, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_timestamp, tvb, offset, 8, ENC_TIME_MSECS);
+    offset += 8;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_activedifficulty, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    return offset;
+}
+
+static int hf_nano_node_id_handshake_is_query = -1;
+static int hf_nano_node_id_handshake_is_response = -1;
+
+static int hf_nano_node_id_handshake_query_cookie = -1;
+
+static int hf_nano_node_id_handshake_response_account = -1;
+static int hf_nano_node_id_handshake_response_signature = -1;
+
+static gint ett_nano_node_id_handshake = -1;
+static gint ett_nano_node_id_handshake_request = -1;
+
+static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
+    guint total_body_size = 0;
+    guint32 is_query = extensions & 0x0001;
+    guint32 is_response = extensions & 0x0002;
+
+    // Is query
+    if (is_query) {
+        total_body_size += 32;
+    }
+
+    // Is response
+    if (is_response) {
+        total_body_size += 32 + 64;
+    }
+
+    
+    proto_tree *handshake_tree = proto_tree_add_subtree(nano_tree, tvb, offset, total_body_size, ett_nano_node_id_handshake, NULL, "Node ID Handshake");
+    proto_tree_add_boolean(handshake_tree, hf_nano_node_id_handshake_is_query, tvb, offset, 0, is_query);
+    proto_tree_add_boolean(handshake_tree, hf_nano_node_id_handshake_is_response, tvb, offset, 0, is_response);
+
+    if (is_query) {
+        proto_tree_add_item(handshake_tree, hf_nano_node_id_handshake_query_cookie, tvb, offset, 32, ENC_NA);
+        offset += 32;
+    }
+
+    if (is_response) {
+        proto_tree_add_item(handshake_tree, hf_nano_node_id_handshake_response_account, tvb, offset, 32, ENC_NA);
+        offset += 32;
+
+        proto_tree_add_item(handshake_tree, hf_nano_node_id_handshake_response_signature, tvb, offset, 64, ENC_NA);
+        offset += 64;
+    }
+
+    col_add_fstr(pinfo->cinfo, COL_INFO, "Node ID Handshake");
+
+    // offset += total_body_size;
+    return offset;
+}
+
+// dissect a Nano packet
 static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
 {
     proto_item *ti;
@@ -415,6 +557,12 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
 
     // call specific dissectors for specific packet types
     switch (nano_packet_type) {
+        case NANO_PACKET_TYPE_TELEMETRY_ACK:
+            return dissect_nano_telemetry_ack(tvb, pinfo, nano_tree, offset, extensions);
+        case NANO_PACKET_TYPE_TELEMETRY_REQ:
+            return dissect_nano_telemetry_req(tvb, pinfo, nano_tree, offset, extensions);
+        case NANO_PACKET_TYPE_NODE_ID_HANDSHAKE:
+            return dissect_nano_node_id_handshake(tvb, pinfo, nano_tree, offset, extensions);
         case NANO_PACKET_TYPE_KEEPALIVE:
             return dissect_nano_keepalive(tvb, pinfo, nano_tree, offset);
 
@@ -425,8 +573,8 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
             // set the INFO header with more information
             nano_block_type = (guint)((extensions >> 8) & 0xF);
             col_add_fstr(pinfo->cinfo, COL_INFO, "%s (%s)",
-                    val_to_str_const(nano_packet_type, VALS(nano_packet_type_strings), " "),
-                    val_to_str(nano_block_type, VALS(nano_block_type_strings), "Unknown (%d)"));
+                val_to_str_const(nano_packet_type, VALS(nano_packet_type_strings), " "),
+                val_to_str(nano_block_type, VALS(nano_block_type_strings), "Unknown (%d)"));
 
             // if it's a Confirm Ack packet, we first have a vote
             if (nano_packet_type == NANO_PACKET_TYPE_CONFIRM_ACK) {
@@ -455,7 +603,7 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
 
         default:
             col_add_str(pinfo->cinfo, COL_INFO,
-                    val_to_str(nano_packet_type, VALS(nano_packet_type_strings), "Unknown (%d)"));
+                val_to_str(nano_packet_type, VALS(nano_packet_type_strings), "Unknown (%d)"));
     }
 
     return tvb_captured_length(tvb);
@@ -734,289 +882,359 @@ static int dissect_nano_tcp_server_message(tvbuff_t *tvb, packet_info *pinfo _U_
 // dissect a Nano bootstrap packet (TCP)
 static int dissect_nano_tcp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
 {
-    int is_client;
-    proto_item *ti;
-    proto_tree *nano_tree;
-    conversation_t *conversation;
-    struct nano_session_state *session_state, *packet_session_state;
-
-    // try to find this conversation
-    if ((conversation = find_conversation_pinfo(pinfo, 0)) == NULL) {
-        // create new conversation
-        conversation = conversation_new(pinfo->num, &pinfo->src, &pinfo->dst, conversation_pt_to_endpoint_type(pinfo->ptype),
-                pinfo->srcport, pinfo->destport, 0);
-    }
-
-    // try to find session state
-    session_state = (struct nano_session_state *)conversation_get_proto_data(conversation, proto_nano);
-    if (!session_state) {
-        // create new session state
-        session_state = wmem_new0(wmem_file_scope(), struct nano_session_state);
-        session_state->client_packet_type = NANO_PACKET_TYPE_INVALID;
-        session_state->server_port = pinfo->match_uint;
-        conversation_add_proto_data(conversation, proto_nano, session_state);
-    }
-
-    // check if we have a session state associated with the packet (start state for this packet)
-    packet_session_state = (struct nano_session_state *)p_get_proto_data(wmem_file_scope(), pinfo, proto_nano, 0);
-    if (!packet_session_state) {
-        // this packet does not have a stored session state, get it from the conversation
-        packet_session_state = wmem_new0(wmem_file_scope(), struct nano_session_state);
-        memcpy(packet_session_state, session_state, sizeof(struct nano_session_state));
-        p_add_proto_data(wmem_file_scope(), pinfo, proto_nano, 0, packet_session_state);
-    } else {
-        // this packet has a stored session state, take this as a starting point
-        memcpy(session_state, packet_session_state, sizeof(struct nano_session_state));
-    }
-
     // set some columns to meaningful defaults
-    col_set_str(pinfo->cinfo, COL_PROTOCOL, "Nano Bootstrap");
+    col_set_str(pinfo->cinfo, COL_PROTOCOL, "Nano");
     col_clear(pinfo->cinfo, COL_INFO);
 
-    // add Nano protocol tree
-    ti = proto_tree_add_item(tree, proto_nano, tvb, 0, -1, ENC_NA);
-    nano_tree = proto_item_add_subtree(ti, ett_nano);
-
-    // is this a bootstrap client or server?
-    is_client = pinfo->destport == session_state->server_port;
-
-    if (is_client) {
-        // Nano bootstrap client
-        tcp_dissect_pdus(tvb, pinfo, nano_tree, TRUE, 1, get_nano_tcp_client_message_len, dissect_nano_tcp_client_message, session_state);
-
-    } else {
-        // Nano bootstrap server
-        tcp_dissect_pdus(tvb, pinfo, nano_tree, TRUE, 1, get_nano_tcp_server_message_len, dissect_nano_tcp_server_message, session_state);
-    }
+    dissect_nano(tvb, pinfo, tree, data);
 
     return tvb_captured_length(tvb);
-}
-
-/* Heuristics test */
-static gboolean test_nano(packet_info *pinfo _U_, tvbuff_t *tvb, int offset _U_, void *data _U_)
-{
-    // if it's not a complete header length, it's not Nano.
-    if (tvb_captured_length(tvb) < NANO_HEADER_LENGTH)
-        return FALSE;
-
-    // first byte must be 'R', second byte 'A' or 'B' or 'C'
-    if (tvb_get_guint8(tvb, 0) != (guint8) 'R')
-        return FALSE;
-
-    char network = (char) tvb_get_guint8(tvb, 1);
-    if (network != 'A' && network != 'B' && network != 'C')
-        return FALSE;
-
-    guint8 version_max = tvb_get_guint8(tvb, 2);
-    guint8 version_using = tvb_get_guint8(tvb, 3);
-    guint8 version_min = tvb_get_guint8(tvb, 4);
-    if (version_max > 30 || version_max < version_using || version_using < version_min)
-        return FALSE;
-
-    guint8 ptype = tvb_get_guint8(tvb, 5);
-    if (ptype > 15)
-        return FALSE;
-
-    return TRUE;
-}
-
-static gboolean dissect_nano_heur_tcp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
-{
-    conversation_t *conversation;
-    struct nano_session_state *session_state;
-
-    if (!test_nano(pinfo, tvb, 0, data))
-        return FALSE;
-
-    conversation = find_or_create_conversation(pinfo);
-    conversation_set_dissector(conversation, nano_tcp_handle);
-
-    // try to find session state
-    session_state = (struct nano_session_state *)conversation_get_proto_data(conversation, proto_nano);
-    if (!session_state) {
-        // create new session state
-        session_state = wmem_new0(wmem_file_scope(), struct nano_session_state);
-        session_state->client_packet_type = NANO_PACKET_TYPE_INVALID;
-        session_state->server_port = pinfo->destport;
-        conversation_add_proto_data(conversation, proto_nano, session_state);
-    }
-
-    dissect_nano_tcp(tvb, pinfo, tree, data);
-
-    return TRUE;
 }
 
 void proto_register_nano(void)
 {
     static hf_register_info hf[] = {
-        { &hf_nano_magic_number,
-          { "Magic Number", "nano.magic_number",
+        {
+            &hf_nano_magic_number,
+            { "Magic Number", "nano.magic_number",
             FT_STRING, STR_ASCII, NULL, 0x00,
             "Nano Protocol Magic Number", HFILL }
         },
-        { &hf_nano_version_max,
-          { "Maximum Version", "nano.version_max",
+        {
+            &hf_nano_version_max,
+            { "Maximum Version", "nano.version_max",
             FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
             "Maximum Supported Protocol Version", HFILL }
         },
-        { &hf_nano_version_using,
-          { "Using Version", "nano.version_using",
+        {
+            &hf_nano_version_using,
+            { "Using Version", "nano.version_using",
             FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
             "Used Protocol Version", HFILL }
         },
-        { &hf_nano_version_min,
-          { "Minimum Version", "nano.version_min",
+        {
+            &hf_nano_version_min,
+            { "Minimum Version", "nano.version_min",
             FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
             "Minimum Supported Protocol Version", HFILL }
         },
-        { &hf_nano_packet_type,
-          { "Packet Type", "nano.packet_type",
+        {
+            &hf_nano_packet_type,
+            { "Packet Type", "nano.packet_type",
             FT_UINT8, BASE_DEC_HEX, VALS(nano_packet_type_strings), 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_extensions,
-          { "Extensions Field", "nano.extensions",
+        {
+            &hf_nano_extensions,
+            { "Extensions Field", "nano.extensions",
             FT_UINT16, BASE_HEX, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_extensions_block_type,
-          { "Block Type", "nano.extensions.block_type",
+        {
+            &hf_nano_node_id_handshake_is_query,
+            { "Is Request", "nano.node_id_handshake.is_query",
+            FT_BOOLEAN, BASE_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_node_id_handshake_is_response,
+            { "Is Response", "nano.node_id_handshake.is_response",
+            FT_BOOLEAN, BASE_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_node_id_handshake_query_cookie,
+            { "Cookie", "nano.node_id_handshake.cookie",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_node_id_handshake_response_account,
+            { "Response Account", "nano.node_id_handshake.response_account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_node_id_handshake_response_signature,
+            { "Response Signature", "nano.node_id_handshake.response_signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_extensions_block_type,
+            { "Block Type", "nano.extensions.block_type",
             FT_UINT16, BASE_HEX, VALS(nano_block_type_strings), 0x0f00,
             NULL, HFILL }
         },
-        { &hf_nano_keepalive_peer_ip,
-          { "Peer IP Address", "nano.keepalive.peer_ip",
+        {
+            &hf_nano_keepalive_peer_ip,
+            { "Peer IP Address", "nano.keepalive.peer_ip",
             FT_IPv6, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_keepalive_peer_port,
-          { "Peer Port", "nano.keepalive.peer_port",
+        {
+            &hf_nano_keepalive_peer_port,
+            { "Peer Port", "nano.keepalive.peer_port",
             FT_UINT16, BASE_DEC, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_hash_previous,
-          { "Previous Block Hash", "nano.block.hash_previous",
+        {
+            &hf_nano_block_hash_previous,
+            { "Previous Block Hash", "nano.block.hash_previous",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_hash_source,
-          { "Source Block Hash", "nano.block.hash_source",
+        {
+            &hf_nano_block_hash_source,
+            { "Source Block Hash", "nano.block.hash_source",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_signature,
-          { "Signature", "nano.block.signature",
+        {
+            &hf_nano_block_signature,
+            { "Signature", "nano.block.signature",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_work,
-          { "Work", "nano.block.work",
+        {
+            &hf_nano_block_work,
+            { "Work", "nano.block.work",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_destination_account,
-          { "Destination Account", "nano.block.destination_account",
+        {
+            &hf_nano_block_destination_account,
+            { "Destination Account", "nano.block.destination_account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_balance,
-          { "Balance", "nano.block.balance",
+        {
+            &hf_nano_block_balance,
+            { "Balance", "nano.block.balance",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_account,
-          { "Account", "nano.block.account",
+        {
+            &hf_nano_block_account,
+            { "Account", "nano.block.account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_representative_account,
-          { "Representative Account", "nano.block.representative_account",
+        {
+            &hf_nano_block_representative_account,
+            { "Representative Account", "nano.block.representative_account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_block_link,
-          { "Link", "nano.block.link",
+        {
+            &hf_nano_block_link,
+            { "Link", "nano.block.link",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_vote_account,
-          { "Account", "nano.vote.account",
+        {
+            &hf_nano_vote_account,
+            { "Account", "nano.vote.account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_vote_signature,
-          { "Signature", "nano.vote.signature",
+        {
+            &hf_nano_vote_signature,
+            { "Signature", "nano.vote.signature",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_vote_sequence,
-          { "Sequence", "nano.vote.sequence",
+        {
+            &hf_nano_vote_sequence,
+            { "Sequence", "nano.vote.sequence",
             FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_account,
-          { "Account", "nano.bulk_pull.account",
+        {
+            &hf_nano_bulk_pull_account,
+            { "Account", "nano.bulk_pull.account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_block_hash_end,
-          { "End Block Hash", "nano.bulk_pull_block.hash_end",
+        {
+            &hf_nano_bulk_pull_block_hash_end,
+            { "End Block Hash", "nano.bulk_pull_block.hash_end",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_frontier_req_account,
-          { "Account", "nano.frontier_req.account",
+        {
+            &hf_nano_frontier_req_account,
+            { "Account", "nano.frontier_req.account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_frontier_req_age,
-          { "Age", "nano.frontier_req.age",
+        {
+            &hf_nano_frontier_req_age,
+            { "Age", "nano.frontier_req.age",
             FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_frontier_req_count,
-          { "Count", "nano.frontier_req.count",
+        {
+            &hf_nano_frontier_req_count,
+            { "Count", "nano.frontier_req.count",
             FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_blocks_min_hash,
-          { "Min Block Hash", "nano.bulk_pull_blocks.min_hash",
+        {
+            &hf_nano_bulk_pull_blocks_min_hash,
+            { "Min Block Hash", "nano.bulk_pull_blocks.min_hash",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_blocks_max_hash,
-          { "Max Block Hash", "nano.bulk_pull_blocks.max_hash",
+        {
+            &hf_nano_bulk_pull_blocks_max_hash,
+            { "Max Block Hash", "nano.bulk_pull_blocks.max_hash",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_blocks_mode,
-          { "Mode", "nano.bulk_pull_blocks.mode",
+        {
+            &hf_nano_bulk_pull_blocks_mode,
+            { "Mode", "nano.bulk_pull_blocks.mode",
             FT_UINT8, BASE_DEC_HEX, VALS(nano_bulk_pull_blocks_mode_strings), 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_blocks_max_count,
-          { "Max Count", "nano.bulk_pull_blocks.max_count",
+        {
+            &hf_nano_bulk_pull_blocks_max_count,
+            { "Max Count", "nano.bulk_pull_blocks.max_count",
             FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_push_block_type,
-          { "Block Type", "nano.bulk_push.block_type",
+        {
+            &hf_nano_bulk_push_block_type,
+            { "Block Type", "nano.bulk_push.block_type",
             FT_UINT8, BASE_HEX, VALS(nano_block_type_strings), 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_bulk_pull_block_type,
-          { "Block Type", "nano.bulk_pull.block_type",
+        {
+            &hf_nano_bulk_pull_block_type,
+            { "Block Type", "nano.bulk_pull.block_type",
             FT_UINT8, BASE_HEX, VALS(nano_block_type_strings), 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_frontier_account,
-          { "Account", "nano.frontier.account",
+        {
+            &hf_nano_frontier_account,
+            { "Account", "nano.frontier.account",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
-        { &hf_nano_frontier_head_hash,
-          { "Head Hash", "nano.frontier.head_hash",
+        {
+            &hf_nano_frontier_head_hash,
+            { "Head Hash", "nano.frontier.head_hash",
             FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        /* Telemetry Ack */
+        {
+            &hf_nano_telemetry_ack_signature,
+            { "Signature", "nano.telemetry_ack.signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_nodeid,
+            { "Node ID", "nano.telemetry_ack.nodeid",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_blockcount,
+            { "Block Count", "nano.telemetry_ack.blockcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_cementedcount,
+            { "Cemented Count", "nano.telemetry_ack.cementedcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_uncheckedcount,
+            { "Unchecked Count", "nano.telemetry_ack.uncheckedcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_accountcount,
+            { "Account Count", "nano.telemetry_ack.accountcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_bandwidthcap,
+            { "Bandwidth Cap", "nano.telemetry_ack.bandwidthcap",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_uptime,
+            { "Uptime", "nano.telemetry_ack.uptime",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_peercount,
+            { "Peer Count", "nano.telemetry_ack.peercount",
+            FT_UINT32, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_protocolversion,
+            { "Protocol Version", "nano.telemetry_ack.protocolversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_genesisblock,
+            { "Genesis Block", "nano.telemetry_ack.genesisblock",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_majorversion,
+            { "Major Version", "nano.telemetry_ack.majorversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_minorversion,
+            { "Minor Version", "nano.telemetry_ack.minorversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_patchversion,
+            { "Patch Version", "nano.telemetry_ack.patchversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_prereleaseversion,
+            { "Pre-Release Version", "nano.telemetry_ack.prereleaseversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_maker,
+            { "Maker", "nano.telemetry_ack.maker",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_timestamp,
+            { "Timestamp", "nano.telemetry_ack.timestamp",
+            FT_ABSOLUTE_TIME, ABSOLUTE_TIME_UTC, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_activedifficulty,
+            { "Active Difficulty", "nano.telemetry_ack.activedifficulty",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
             NULL, HFILL }
         }
     };
@@ -1026,6 +1244,12 @@ void proto_register_nano(void)
         &ett_nano_header,
         &ett_nano_extensions,
         &ett_nano_peers,
+
+        &ett_nano_node_id_handshake,
+        &ett_nano_node_id_handshake_request,
+
+        &ett_nano_telemetry_ack,
+
         &ett_nano_peer_details[0],
         &ett_nano_peer_details[1],
         &ett_nano_peer_details[2],
@@ -1052,18 +1276,17 @@ void proto_reg_handoff_nano(void)
 {
     nano_tcp_handle = register_dissector("nano-over-tcp", dissect_nano_tcp, proto_nano);
     dissector_add_uint_with_preference("tcp.port", NANO_TCP_PORT, nano_tcp_handle);
-    heur_dissector_add("tcp", dissect_nano_heur_tcp, "Nano TCP Heuristics", "nano-tcp", proto_nano, HEURISTIC_DISABLE);    
 }
 
 /*
- * Editor modelines  -  https://www.wireshark.org/tools/modelines.html
- *
- * Local variables:
- * c-basic-offset: 4
- * tab-width: 8
- * indent-tabs-mode: nil
- * End:
- *
- * vi: set shiftwidth=4 tabstop=8 expandtab:
- * :indentSize=4:tabSize=8:noTabs=true:
- */
+* Editor modelines  -  https://www.wireshark.org/tools/modelines.html
+*
+* Local variables:
+* c-basic-offset: 4
+* tab-width: 8
+* indent-tabs-mode: nil
+* End:
+*
+* vi: set shiftwidth=4 tabstop=8 expandtab:
+* :indentSize=4:tabSize=8:noTabs=true:
+*/
