@@ -153,7 +153,7 @@ static const value_string nano_bulk_pull_blocks_mode_strings[] = {
     { 0, NULL },
 };
 
-#define NANO_TCP_PORT 7075 /* Not IANA registered */
+#define NANO_TCP_PORT 17075 /* Not IANA registered */
 
 #define NANO_BLOCK_SIZE_SEND    (32+32+16+64+8)
 #define NANO_BLOCK_SIZE_RECEIVE (32+32+64+8)
@@ -164,27 +164,108 @@ static const value_string nano_bulk_pull_blocks_mode_strings[] = {
 // Nano header length, and thus minimum length of any Nano UDP packet (or bootstrap request)
 #define NANO_HEADER_LENGTH 8
 
-// Nano bootstrap session state
-struct nano_session_state {
-    int client_packet_type;
-    guint32 server_port;
+static const char fast_strings[][4] = {
+    "0", "1", "2", "3", "4", "5", "6", "7",
+    "8", "9", "10", "11", "12", "13", "14", "15",
+    "16", "17", "18", "19", "20", "21", "22", "23",
+    "24", "25", "26", "27", "28", "29", "30", "31",
+    "32", "33", "34", "35", "36", "37", "38", "39",
+    "40", "41", "42", "43", "44", "45", "46", "47",
+    "48", "49", "50", "51", "52", "53", "54", "55",
+    "56", "57", "58", "59", "60", "61", "62", "63",
+    "64", "65", "66", "67", "68", "69", "70", "71",
+    "72", "73", "74", "75", "76", "77", "78", "79",
+    "80", "81", "82", "83", "84", "85", "86", "87",
+    "88", "89", "90", "91", "92", "93", "94", "95",
+    "96", "97", "98", "99", "100", "101", "102", "103",
+    "104", "105", "106", "107", "108", "109", "110", "111",
+    "112", "113", "114", "115", "116", "117", "118", "119",
+    "120", "121", "122", "123", "124", "125", "126", "127",
+    "128", "129", "130", "131", "132", "133", "134", "135",
+    "136", "137", "138", "139", "140", "141", "142", "143",
+    "144", "145", "146", "147", "148", "149", "150", "151",
+    "152", "153", "154", "155", "156", "157", "158", "159",
+    "160", "161", "162", "163", "164", "165", "166", "167",
+    "168", "169", "170", "171", "172", "173", "174", "175",
+    "176", "177", "178", "179", "180", "181", "182", "183",
+    "184", "185", "186", "187", "188", "189", "190", "191",
+    "192", "193", "194", "195", "196", "197", "198", "199",
+    "200", "201", "202", "203", "204", "205", "206", "207",
+    "208", "209", "210", "211", "212", "213", "214", "215",
+    "216", "217", "218", "219", "220", "221", "222", "223",
+    "224", "225", "226", "227", "228", "229", "230", "231",
+    "232", "233", "234", "235", "236", "237", "238", "239",
+    "240", "241", "242", "243", "244", "245", "246", "247",
+    "248", "249", "250", "251", "252", "253", "254", "255"
 };
+
+void ip_to_str_buf(const guint8 *ad, gchar *buf, const int buf_len)
+{
+    register gchar const *p;
+    register gchar *b=buf;
+
+    if (buf_len < WS_INET_ADDRSTRLEN) {
+        (void) g_strlcpy(buf, "[Buffer too small]", buf_len);  /* Let the unexpected value alert user */
+        return;
+    }
+
+    p=fast_strings[*ad++];
+    do {
+        *b++=*p;
+        p++;
+    } while(*p);
+    *b++='.';
+
+    p=fast_strings[*ad++];
+    do {
+        *b++=*p;
+        p++;
+    } while(*p);
+    *b++='.';
+
+    p=fast_strings[*ad++];
+    do {
+        *b++=*p;
+        p++;
+    } while(*p);
+    *b++='.';
+
+    p=fast_strings[*ad];
+    do {
+        *b++=*p;
+        p++;
+    } while(*p);
+    *b=0;
+}
+
+int ip6_to_str_buf(const ws_in6_addr *addr, gchar *buf, int buf_size)
+{
+    gchar addr_buf[WS_INET6_ADDRSTRLEN];
+    int len;
+
+    /* slightly more efficient than ip6_to_str_buf_with_pfx(addr, buf, buf_size, NULL) */
+    len = (int)g_strlcpy(buf, ws_inet_ntop6(addr, addr_buf, sizeof(addr_buf)), buf_size);     /* this returns len = strlen(addr_buf) */
+
+    if (len > buf_size - 1) { /* size minus nul terminator */
+        len = (int)g_strlcpy(buf, "[Buffer too small]", buf_size);  /* Let the unexpected value alert user */
+    }
+    return len;
+}
 
 // dissect the inside of a keepalive packet (that is, the neighbor nodes)
 static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset)
 {
     proto_item *ti;
     proto_tree *peer_tree, *peer_entry_tree;
-    int i, peers;
+    int peers = 0;
     ws_in6_addr ip_addr;
     guint32 port;
     gchar buf[100];
 
     peer_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 8*(16+2), ett_nano_peers, NULL, "Peer List");
 
-    peers = 0;
-    for (i = 0; i < 8; i++) {
-        peer_entry_tree = proto_tree_add_subtree(peer_tree, tvb, offset, 18, ett_nano_peer_details[i], &ti, "Peer");
+    for (int i = 0; i < 8; i++) {
+        peer_entry_tree = proto_tree_add_subtree(peer_tree, tvb, offset, 16 + 2, ett_nano_peer_details[i], &ti, "Peer");
 
         tvb_get_ipv6(tvb, offset, &ip_addr);
         proto_tree_add_item(peer_entry_tree, hf_nano_keepalive_peer_ip, tvb, offset, 16, ENC_NA);
@@ -196,11 +277,11 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
         if (!memcmp(&ip_addr, "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0", 16)) {
             proto_item_append_text(ti, ": (none)");
         } else if (!memcmp(&ip_addr, "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xff\xff", 12)) {
-            // ip_to_str_buf((gchar *) &ip_addr + 12, buf, sizeof(buf));
+            ip_to_str_buf((gchar *) &ip_addr + 12, buf, sizeof(buf));
             proto_item_append_text(ti, ": %s:%d", buf, port);
             peers++;
         } else {
-            // ip6_to_str_buf(&ip_addr, buf, sizeof(buf));
+            ip6_to_str_buf(&ip_addr, buf, sizeof(buf));
             proto_item_append_text(ti, ": [%s]:%d", buf, port);
             peers++;
         }
@@ -395,6 +476,24 @@ static int dissect_nano_header(tvbuff_t *tvb, proto_tree *nano_tree, int offset,
     return offset;
 }
 
+static gint ett_nano_confirm_req = -1;
+
+static int dissect_nano_confirm_req (tvbuff_t* tvb, packet_info* pinfo, proto_tree* nano_tree, int offset, guint64 extensions) {
+    int block_type = (extensions & 0x0f00) >> 8;
+
+    col_add_fstr(pinfo->cinfo, COL_INFO, "Confirm Req");
+    if (block_type == NANO_BLOCK_TYPE_NOT_A_BLOCK) {
+        // Req by hash
+        int item_count = (extensions & 0xf000) >> 12;
+
+        proto_tree *telemetry_tree = proto_tree_add_subtree(nano_tree, tvb, offset, item_count * 64, ett_nano_confirm_req, NULL, "Confirm Req");
+    } else {
+
+    }
+
+    return offset;
+}
+
 static int dissect_nano_telemetry_req(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
     col_add_fstr(pinfo->cinfo, COL_INFO, "Telemetry Req");
 
@@ -501,13 +600,17 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
     guint32 is_query = extensions & 0x0001;
     guint32 is_response = extensions & 0x0002;
 
+    col_add_fstr(pinfo->cinfo, COL_INFO, "Node ID Handshake");
+
     // Is query
     if (is_query) {
+        col_append_str(pinfo->cinfo, COL_INFO, " (Query) ");
         total_body_size += 32;
     }
 
     // Is response
     if (is_response) {
+        col_append_str(pinfo->cinfo, COL_INFO, " (Response) ");
         total_body_size += 32 + 64;
     }
 
@@ -529,9 +632,6 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
         offset += 64;
     }
 
-    col_add_fstr(pinfo->cinfo, COL_INFO, "Node ID Handshake");
-
-    // offset += total_body_size;
     return offset;
 }
 
@@ -565,11 +665,10 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
             return dissect_nano_node_id_handshake(tvb, pinfo, nano_tree, offset, extensions);
         case NANO_PACKET_TYPE_KEEPALIVE:
             return dissect_nano_keepalive(tvb, pinfo, nano_tree, offset);
-
-        case NANO_PACKET_TYPE_PUBLISH:
         case NANO_PACKET_TYPE_CONFIRM_REQ:
+            return dissect_nano_confirm_req(tvb, pinfo, nano_tree, offset, extensions);
+        case NANO_PACKET_TYPE_PUBLISH:
         case NANO_PACKET_TYPE_CONFIRM_ACK:
-
             // set the INFO header with more information
             nano_block_type = (guint)((extensions >> 8) & 0xF);
             col_add_fstr(pinfo->cinfo, COL_INFO, "%s (%s)",
@@ -607,57 +706,6 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
     }
 
     return tvb_captured_length(tvb);
-}
-
-// determine the length of a nano bootstrap message (client)
-static guint get_nano_tcp_client_message_len(packet_info *pinfo _U_, tvbuff_t *tvb, int offset, void *data _U_)
-{
-    int nano_packet_type, nano_block_type;
-    struct nano_session_state *session_state;
-
-    session_state = (struct nano_session_state *)data;
-    if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PUSH) {
-        // we're in the middle of a bulk push, so we expect a block type (uint8) and a block
-
-        nano_block_type = tvb_get_guint8(tvb, offset);
-        switch (nano_block_type) {
-            case NANO_BLOCK_TYPE_NOT_A_BLOCK:
-                return 1;
-            case NANO_BLOCK_TYPE_SEND:
-                return 1 + NANO_BLOCK_SIZE_SEND;
-            case NANO_BLOCK_TYPE_RECEIVE:
-                return 1 + NANO_BLOCK_SIZE_RECEIVE;
-            case NANO_BLOCK_TYPE_OPEN:
-                return 1 + NANO_BLOCK_SIZE_OPEN;
-            case NANO_BLOCK_TYPE_CHANGE:
-                return 1 + NANO_BLOCK_SIZE_CHANGE;
-            case NANO_BLOCK_TYPE_STATE:
-                return 1 + NANO_BLOCK_SIZE_STATE;
-            default:
-                // this is invalid
-                return tvb_captured_length(tvb) - offset;
-        }
-    }
-
-    // we expect a client command, this starts with a full Nano header
-    if (tvb_captured_length(tvb) - offset < NANO_HEADER_LENGTH) {
-        return 0;
-    }
-
-    nano_packet_type = tvb_get_guint8(tvb, offset + 5);
-
-    switch (nano_packet_type) {
-        case NANO_PACKET_TYPE_BULK_PULL:
-            return NANO_HEADER_LENGTH + 32 + 32;
-        case NANO_PACKET_TYPE_BULK_PUSH:
-            return NANO_HEADER_LENGTH;
-        case NANO_PACKET_TYPE_FRONTIER_REQ:
-            return NANO_HEADER_LENGTH + 32 + 4 + 4;
-        case NANO_PACKET_TYPE_BULK_PULL_BLOCKS:
-            return NANO_HEADER_LENGTH + 32 + 32 + 1 + 4;
-    }
-
-    return tvb_captured_length(tvb) - offset;
 }
 
 // dissect a bulk pull request
@@ -717,106 +765,6 @@ static int dissect_nano_bulk_pull_blocks(tvbuff_t *tvb, proto_tree *nano_tree, i
     return offset;
 }
 
-// dissect a single nano bootstrap message (client)
-static int dissect_nano_tcp_client_message(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_)
-{
-    int offset, nano_packet_type, nano_block_type;
-    guint64 extensions;
-    struct nano_session_state *session_state;
-
-    session_state = (struct nano_session_state *)data;
-
-    if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PUSH) {
-        // we're within a bulk push
-        col_set_str(pinfo->cinfo, COL_INFO, "Bulk Push ");
-        proto_tree_add_item_ret_uint(tree, hf_nano_bulk_push_block_type, tvb, 0, 1, ENC_NA, &nano_block_type);
-        switch (nano_block_type) {
-            case NANO_BLOCK_TYPE_NOT_A_BLOCK:
-                session_state->client_packet_type = NANO_PACKET_TYPE_INVALID;
-                break;
-            case NANO_BLOCK_TYPE_SEND:
-                dissect_nano_send_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_RECEIVE:
-                dissect_nano_receive_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_OPEN:
-                dissect_nano_open_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_CHANGE:
-                dissect_nano_change_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_STATE:
-                dissect_nano_state(tvb, tree, 1);
-                break;
-        }
-        return tvb_captured_length(tvb);
-    }
-
-    // a bootstrap client command starts with a Nano header
-    offset = dissect_nano_header(tvb, tree, 0, &nano_packet_type, &extensions);
-    session_state->client_packet_type = nano_packet_type;
-
-    switch (nano_packet_type) {
-        case NANO_PACKET_TYPE_BULK_PULL:
-            col_set_str(pinfo->cinfo, COL_INFO, "Bulk Pull Request ");
-            dissect_nano_bulk_pull(tvb, tree, offset);
-            break;
-        case NANO_PACKET_TYPE_BULK_PUSH:
-            col_set_str(pinfo->cinfo, COL_INFO, "Bulk Push Request ");
-            break;
-        case NANO_PACKET_TYPE_FRONTIER_REQ:
-            col_set_str(pinfo->cinfo, COL_INFO, "Frontier Request ");
-            dissect_nano_frontier_req(tvb, tree, offset);
-            break;
-        case NANO_PACKET_TYPE_BULK_PULL_BLOCKS:
-            col_set_str(pinfo->cinfo, COL_INFO, "Bulk Pull Blocks Request ");
-            dissect_nano_bulk_pull_blocks(tvb, tree, offset);
-            break;
-    }
-
-    return tvb_captured_length(tvb);
-}
-
-// determine the length of a nano bootstrap message (server)
-static guint get_nano_tcp_server_message_len(packet_info *pinfo _U_, tvbuff_t *tvb, int offset, void *data _U_)
-{
-    int nano_block_type;
-    struct nano_session_state *session_state;
-
-    session_state = (struct nano_session_state *)data;
-
-    if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL ||
-        session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL_BLOCKS) {
-        // we're in response to a bulk pull (blocks), so we expect a block type (uint8) and a block
-
-        nano_block_type = tvb_get_guint8(tvb, offset);
-        switch (nano_block_type) {
-            case NANO_BLOCK_TYPE_NOT_A_BLOCK:
-                return 1;
-            case NANO_BLOCK_TYPE_SEND:
-                return 1 + NANO_BLOCK_SIZE_SEND;
-            case NANO_BLOCK_TYPE_RECEIVE:
-                return 1 + NANO_BLOCK_SIZE_RECEIVE;
-            case NANO_BLOCK_TYPE_OPEN:
-                return 1 + NANO_BLOCK_SIZE_OPEN;
-            case NANO_BLOCK_TYPE_CHANGE:
-                return 1 + NANO_BLOCK_SIZE_CHANGE;
-            case NANO_BLOCK_TYPE_STATE:
-                return 1 + NANO_BLOCK_SIZE_STATE;
-            default:
-                // this is invalid
-                return tvb_captured_length(tvb) - offset;
-        }
-    }
-
-    if (session_state->client_packet_type == NANO_PACKET_TYPE_FRONTIER_REQ) {
-        return 32 + 32;
-    }
-
-    return tvb_captured_length(tvb) - offset;
-}
-
 // dissect a frontier response entry
 static int dissect_nano_frontier(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
 {
@@ -831,52 +779,6 @@ static int dissect_nano_frontier(tvbuff_t *tvb, proto_tree *nano_tree, int offse
     offset += 32;
 
     return offset;
-}
-
-// dissect a single nano bootstrap message (server)
-static int dissect_nano_tcp_server_message(tvbuff_t *tvb, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_)
-{
-    int nano_block_type;
-    struct nano_session_state *session_state;
-
-    session_state = (struct nano_session_state *)data;
-
-    if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL ||
-        session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL_BLOCKS) {
-
-        // we're within a bulk pull (blocks)
-        col_set_str(pinfo->cinfo, COL_INFO, session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL ? "Bulk Pull Response " : "Bulk Pull Blocks Response ");
-
-        proto_tree_add_item_ret_uint(tree, hf_nano_bulk_pull_block_type, tvb, 0, 1, ENC_NA, &nano_block_type);
-        switch (nano_block_type) {
-            case NANO_BLOCK_TYPE_NOT_A_BLOCK:
-                session_state->client_packet_type = NANO_PACKET_TYPE_INVALID;
-                break;
-            case NANO_BLOCK_TYPE_SEND:
-                dissect_nano_send_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_RECEIVE:
-                dissect_nano_receive_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_OPEN:
-                dissect_nano_open_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_CHANGE:
-                dissect_nano_change_block(tvb, tree, 1);
-                break;
-            case NANO_BLOCK_TYPE_STATE:
-                dissect_nano_state(tvb, tree, 1);
-                break;
-        }
-        return tvb_captured_length(tvb);
-    }
-
-    if (session_state->client_packet_type == NANO_PACKET_TYPE_FRONTIER_REQ) {
-        col_set_str(pinfo->cinfo, COL_INFO, "Frontier Response ");
-        dissect_nano_frontier(tvb, tree, 0);
-    }
-
-    return tvb_captured_length(tvb);
 }
 
 // dissect a Nano bootstrap packet (TCP)
@@ -1249,6 +1151,8 @@ void proto_register_nano(void)
         &ett_nano_node_id_handshake_request,
 
         &ett_nano_telemetry_ack,
+
+        &ett_nano_confirm_req,
 
         &ett_nano_peer_details[0],
         &ett_nano_peer_details[1],
