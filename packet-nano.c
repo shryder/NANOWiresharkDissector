@@ -76,13 +76,15 @@ static gint ett_nano = -1;
 static gint ett_nano_header = -1;
 static gint ett_nano_extensions = -1;
 static gint ett_nano_peers = -1;
-static gint ett_nano_peer_details[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+static gint ett_nano_peer_details = -1;
 static gint ett_nano_block = -1;
 static gint ett_nano_vote = -1;
 static gint ett_nano_bulk_pull = -1;
 static gint ett_nano_frontier_req = -1;
 static gint ett_nano_bulk_pull_blocks = -1;
 static gint ett_nano_frontier = -1;
+static gint ett_nano_hash_pair = -1;
+static gint ett_nano_bulk_pull_account = -1;
 
 #define NANO_PACKET_TYPE_INVALID 0
 #define NANO_PACKET_TYPE_NOT_A_TYPE 1
@@ -164,6 +166,173 @@ static const value_string nano_bulk_pull_blocks_mode_strings[] = {
 // Nano header length, and thus minimum length of any Nano UDP packet (or bootstrap request)
 #define NANO_HEADER_LENGTH 8
 
+void append_info_col(column_info *cinfo, const gchar *format, ...) {
+    va_list ap;
+
+    va_start(ap, format);
+    col_append_sep_fstr(cinfo, COL_INFO, " | ", format, ap);
+    va_end(ap);
+}
+
+//
+// Dissect Blocks
+//
+static int dissect_nano_block (int block_type, tvbuff_t* tvb, proto_tree* tree, int offset) {
+    switch (block_type) {
+        case NANO_BLOCK_TYPE_RECEIVE:
+            return dissect_nano_receive_block(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_OPEN:
+            return dissect_nano_open_block(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_SEND:
+            return dissect_nano_send_block(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_STATE:
+            return dissect_nano_state(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_CHANGE:
+            return dissect_nano_change_block(tvb, tree, offset);
+    }
+
+    return 0;
+}
+
+static int dissect_nano_receive_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
+{
+    proto_tree *block_tree;
+
+    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_RECEIVE, ett_nano_block, NULL, "Receive Block");
+
+    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_hash_source, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
+    offset += 64;
+
+    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    return offset;
+}
+
+static int dissect_nano_send_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
+{
+    proto_tree *block_tree;
+
+    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_SEND, ett_nano_block, NULL, "Send Block");
+
+    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_destination_account, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_balance, tvb, offset, 16, ENC_NA);
+    offset += 16;
+
+    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
+    offset += 64;
+
+    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    return offset;
+}
+
+static int dissect_nano_open_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
+{
+    proto_tree *block_tree;
+
+    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_OPEN, ett_nano_block, NULL, "Open Block");
+
+    proto_tree_add_item(block_tree, hf_nano_block_hash_source, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_representative_account, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_account, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
+    offset += 64;
+
+    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    return offset;
+}
+
+static int dissect_nano_change_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
+{
+    proto_tree *block_tree;
+
+    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_CHANGE, ett_nano_block, NULL, "Change Block");
+
+    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_representative_account, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
+    offset += 64;
+
+    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    return offset;
+}
+
+static int dissect_nano_state(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
+{
+    proto_tree *block_tree;
+
+    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_STATE, ett_nano_block, NULL, "State Block");
+
+    proto_tree_add_item(block_tree, hf_nano_block_account, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_representative_account, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_balance, tvb, offset, 16, ENC_NA);
+    offset += 16;
+
+    proto_tree_add_item(block_tree, hf_nano_block_link, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
+    offset += 64;
+
+    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
+    offset += 8;
+
+    return offset;
+}
+
+static int get_block_type_size (int block_type) {
+    switch (block_type) {
+        case NANO_BLOCK_TYPE_RECEIVE:
+            return NANO_BLOCK_SIZE_RECEIVE;
+        case NANO_BLOCK_TYPE_OPEN:
+            return NANO_BLOCK_SIZE_OPEN;
+        case NANO_BLOCK_TYPE_SEND:
+            return NANO_BLOCK_SIZE_SEND;
+        case NANO_BLOCK_TYPE_STATE:
+            return NANO_BLOCK_SIZE_STATE;
+        case NANO_BLOCK_TYPE_CHANGE:
+            return NANO_BLOCK_SIZE_CHANGE;
+    }
+
+    return 0;
+}
+//
+// Dissect Keepalive
+//
 static const char fast_strings[][4] = {
     "0", "1", "2", "3", "4", "5", "6", "7",
     "8", "9", "10", "11", "12", "13", "14", "15",
@@ -257,7 +426,6 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
 {
     proto_item *ti;
     proto_tree *peer_tree, *peer_entry_tree;
-    int peers = 0;
     ws_in6_addr ip_addr;
     guint32 port;
     gchar buf[100];
@@ -265,7 +433,7 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
     peer_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 8*(16+2), ett_nano_peers, NULL, "Peer List");
 
     for (int i = 0; i < 8; i++) {
-        peer_entry_tree = proto_tree_add_subtree(peer_tree, tvb, offset, 16 + 2, ett_nano_peer_details[i], &ti, "Peer");
+        peer_entry_tree = proto_tree_add_subtree(peer_tree, tvb, offset, 16 + 2, ett_nano_peer_details, &ti, "Peer");
 
         tvb_get_ipv6(tvb, offset, &ip_addr);
         proto_tree_add_item(peer_entry_tree, hf_nano_keepalive_peer_ip, tvb, offset, 16, ENC_NA);
@@ -279,19 +447,20 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
         } else if (!memcmp(&ip_addr, "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xff\xff", 12)) {
             ip_to_str_buf((gchar *) &ip_addr + 12, buf, sizeof(buf));
             proto_item_append_text(ti, ": %s:%d", buf, port);
-            peers++;
         } else {
             ip6_to_str_buf(&ip_addr, buf, sizeof(buf));
             proto_item_append_text(ti, ": [%s]:%d", buf, port);
-            peers++;
         }
     }
 
-    col_add_fstr(pinfo->cinfo, COL_INFO, "Keepalive (%d peer%s)", peers, plurality(peers, "", "s"));
+    append_info_col(pinfo->cinfo, "Keepalive");
 
     return offset;
 }
 
+//
+// Dissect Message Header
+//
 static int dissect_nano_extensions_header() {
 
 }
@@ -332,31 +501,58 @@ static int dissect_nano_header(tvbuff_t *tvb, proto_tree *nano_tree, int offset,
     return offset;
 }
 
+//
+// Dissect Confirm Req
+//
+
 static int hf_nano_extensions_item_count = -1;
+static int hf_nano_hash_pair_first = -1;
+static int hf_nano_hash_pair_second = -1;
 
 static gint ett_nano_confirm_req = -1;
 
 static int dissect_nano_confirm_req (tvbuff_t* tvb, packet_info* pinfo, proto_tree* nano_tree, int offset, guint64 extensions) {
+    proto_item *ti;
+    proto_tree* hash_pair_tree;
+
     int block_type = (extensions & 0x0f00) >> 8;
 
-    col_add_fstr(pinfo->cinfo, COL_INFO, "Confirm Req");
+    append_info_col(pinfo->cinfo, "Confirm Req");
     if (block_type == NANO_BLOCK_TYPE_NOT_A_BLOCK) {
+        col_append_str(pinfo->cinfo, COL_INFO, " (ReqByHash)");
+
         // Req by hash
         int item_count = (extensions & 0xf000) >> 12;
 
         proto_tree *tree = proto_tree_add_subtree(nano_tree, tvb, offset, item_count * 64, ett_nano_confirm_req, NULL, "Confirm Req");
         proto_tree_add_uint(tree, hf_nano_extensions_item_count, tvb, offset, 0, item_count);
 
-        offset += item_count * 64;
-    } else {
+        for (int i = 0; i < item_count; i++) {
+            hash_pair_tree = proto_tree_add_subtree(tree, tvb, offset, 64, ett_nano_hash_pair, &ti, "Hash Pair");
 
+            proto_tree_add_item(hash_pair_tree, hf_nano_hash_pair_first, tvb, offset, 32, ENC_BIG_ENDIAN);
+            offset += 32;
+
+            proto_tree_add_item(hash_pair_tree, hf_nano_hash_pair_second, tvb, offset, 32, ENC_BIG_ENDIAN);
+            offset += 32;
+        }
+    } else {
+        col_append_fstr(pinfo->cinfo, COL_INFO, " (%s Block)", val_to_str(block_type, VALS(nano_block_type_strings), "Unknown (%d)"));
+
+        int block_type_size = get_block_type_size(block_type);
+        proto_tree *tree = proto_tree_add_subtree(nano_tree, tvb, offset, block_type_size, ett_nano_confirm_req, NULL, "Confirm Req");
+        
+        return dissect_nano_block(block_type, tvb, tree, offset);
     }
 
     return offset;
 }
 
+//
+// Dissect Telemetry Req
+//
 static int dissect_nano_telemetry_req(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
-    col_add_fstr(pinfo->cinfo, COL_INFO, "Telemetry Req");
+    append_info_col(pinfo->cinfo, "Telemetry Req");
 
     return 0;
 }
@@ -383,7 +579,7 @@ static int hf_nano_telemetry_ack_activedifficulty = -1;
 static gint ett_nano_telemetry_ack = -1;
 
 static int dissect_nano_telemetry_ack(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
-    col_add_fstr(pinfo->cinfo, COL_INFO, "Telemetry Ack");
+    append_info_col(pinfo->cinfo, "Telemetry Ack");
 
     guint32 payload_size = extensions & 0x3ff;
     proto_tree *telemetry_tree = proto_tree_add_subtree(nano_tree, tvb, offset, payload_size, ett_nano_telemetry_ack, NULL, "Telemetry Ack");
@@ -445,6 +641,10 @@ static int dissect_nano_telemetry_ack(tvbuff_t *tvb, packet_info *pinfo, proto_t
     return offset;
 }
 
+//
+// Dissect Node ID Handshake
+//
+
 static int hf_nano_node_id_handshake_is_query = -1;
 static int hf_nano_node_id_handshake_is_response = -1;
 
@@ -461,7 +661,7 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
     guint32 is_query = extensions & 0x0001;
     guint32 is_response = extensions & 0x0002;
 
-    col_add_fstr(pinfo->cinfo, COL_INFO, "Node ID Handshake");
+    append_info_col(pinfo->cinfo, "Node ID Handshake");
 
     // Is query
     if (is_query) {
@@ -496,7 +696,47 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
     return offset;
 }
 
-// dissect a Nano packet
+
+//
+// Dissect Publish
+//
+static int dissect_nano_publish (tvbuff_t* tvb, packet_info* pinfo, proto_tree* nano_tree, int offset, guint64 extensions) {
+    int block_type = (extensions & 0x0f00) >> 8;
+
+    append_info_col(pinfo->cinfo, "Publish");
+    col_append_fstr(pinfo->cinfo, COL_INFO, " (%s)", val_to_str(block_type, VALS(nano_block_type_strings), "Unknown (%d)"));
+
+    int block_type_size = get_block_type_size(block_type);
+    proto_tree *tree = proto_tree_add_subtree(nano_tree, tvb, offset, block_type_size, ett_nano_confirm_req, NULL, "Publish");
+
+    return dissect_nano_block(block_type, tvb, tree, offset);
+}
+
+//
+// Dissect Bulk Pull Account
+//
+static int hf_nano_bulk_pull_account_public_key = -1;
+static int hf_nano_bulk_pull_account_minimum_amount = -1;
+static int hf_nano_bulk_pull_account_flags = -1;
+
+static int dissect_nano_bulk_pull_account (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, int offset) {
+    proto_tree *bulk_pull_tree = proto_tree_add_subtree(tree, tvb, offset, 32 + 16 + 1, ett_nano_bulk_pull_account, NULL, "Bulk Pull Account");
+
+    proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_public_key, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_minimum_amount, tvb, offset, 16, ENC_NA);
+    offset += 16;
+
+    proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_flags, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    return offset;
+}
+//
+// Dissect Nano Message
+//
+
 static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
 {
     proto_item *ti;
@@ -509,7 +749,7 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
         return 0;
 
     col_set_str(pinfo->cinfo, COL_PROTOCOL, "Nano");
-    col_clear(pinfo->cinfo, COL_INFO);
+    // col_clear(pinfo->cinfo, COL_INFO);
 
     ti = proto_tree_add_item(tree, proto_nano, tvb, 0, -1, ENC_NA);
     nano_tree = proto_item_add_subtree(ti, ett_nano);
@@ -527,8 +767,12 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
             return dissect_nano_keepalive(tvb, pinfo, nano_tree, offset);
         case NANO_PACKET_TYPE_CONFIRM_REQ:
             return dissect_nano_confirm_req(tvb, pinfo, nano_tree, offset, extensions);
+        case NANO_PACKET_TYPE_PUBLISH:
+            return dissect_nano_publish(tvb, pinfo, nano_tree, offset, extensions);
+        case NANO_PACKET_TYPE_BULK_PULL_ACCOUNT:
+            return dissect_nano_bulk_pull_account(tvb, pinfo, nano_tree, offset);
         default:
-            col_add_str(pinfo->cinfo, COL_INFO, val_to_str(nano_packet_type, VALS(nano_packet_type_strings), "Unknown (%d)"));
+            append_info_col(pinfo->cinfo, val_to_str(nano_packet_type, VALS(nano_packet_type_strings), "Unknown (%d)"));
     }
 
     return tvb_captured_length(tvb);
@@ -566,15 +810,15 @@ static guint get_nano_message_len (packet_info *pinfo _U_, tvbuff_t *tvb, int of
                 } else {
                     switch (block_type) {
                         case NANO_BLOCK_TYPE_SEND:
-                            return NANO_HEADER_LENGTH + 32 + 32 + 16 + 64 + 8;
+                            return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_SEND;
                         case NANO_BLOCK_TYPE_RECEIVE:
-                            return NANO_HEADER_LENGTH + 32 + 32 + 64 + 8;
+                            return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_RECEIVE;
                         case NANO_BLOCK_TYPE_OPEN:
-                            return NANO_HEADER_LENGTH + 32 + 32 + 32 + 64 + 8;
+                            return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_OPEN;
                         case NANO_BLOCK_TYPE_CHANGE:
-                            return NANO_HEADER_LENGTH + 32 + 32 + 64 + 8;
+                            return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_CHANGE;
                         case NANO_BLOCK_TYPE_STATE:
-                            return NANO_HEADER_LENGTH + 32 + 32 + 32 + 16 + 32 + 64 + 8;
+                            return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_STATE;
                     }
                 }
             }
@@ -946,14 +1190,46 @@ void proto_register_nano(void)
             { "Active Difficulty", "nano.telemetry_ack.activedifficulty",
             FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
             NULL, HFILL }
+        },
+        /* Confirm Req */
+        {
+            &hf_nano_hash_pair_first,
+            { "First", "nano.confirm_req.hash_pair.first",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_hash_pair_second,
+            { "Second", "nano.confirm_req.hash_pair.second",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        /* Bulk Pull Account */
+        {
+            &hf_nano_bulk_pull_account_public_key,
+            { "Account Public Key", "nano.bulk_pull_account.account_public_key",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_bulk_pull_account_minimum_amount,
+            { "Minimum Amount", "nano.bulk_pull_account.minimum_amount",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_bulk_pull_account_flags,
+            { "Flags", "nano.bulk_pull_account.flags",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         }
     };
 
     static gint *ett[] = {
         &ett_nano,
+
         &ett_nano_header,
         &ett_nano_extensions,
-        &ett_nano_peers,
 
         &ett_nano_node_id_handshake,
         &ett_nano_node_id_handshake_request,
@@ -962,17 +1238,16 @@ void proto_register_nano(void)
 
         &ett_nano_confirm_req,
 
-        &ett_nano_peer_details[0],
-        &ett_nano_peer_details[1],
-        &ett_nano_peer_details[2],
-        &ett_nano_peer_details[3],
-        &ett_nano_peer_details[4],
-        &ett_nano_peer_details[5],
-        &ett_nano_peer_details[6],
-        &ett_nano_peer_details[7],
+        &ett_nano_peers,
+        &ett_nano_peer_details,
+
+        &ett_nano_hash_pair,
+
         &ett_nano_block,
         &ett_nano_vote,
         &ett_nano_bulk_pull,
+        &ett_nano_bulk_pull_account,
+
         &ett_nano_frontier_req,
         &ett_nano_bulk_pull_blocks,
         &ett_nano_frontier
