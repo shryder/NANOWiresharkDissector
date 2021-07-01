@@ -292,150 +292,6 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
     return offset;
 }
 
-// dissect a receive block
-static int dissect_nano_receive_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *block_tree;
-
-    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_RECEIVE, ett_nano_block, NULL, "Receive Block");
-
-    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_hash_source, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
-    offset += 64;
-
-    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
-    offset += 8;
-
-    return offset;
-}
-
-// dissect a send block
-static int dissect_nano_send_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *block_tree;
-
-    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_SEND, ett_nano_block, NULL, "Send Block");
-
-    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_destination_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_balance, tvb, offset, 16, ENC_NA);
-    offset += 16;
-
-    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
-    offset += 64;
-
-    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
-    offset += 8;
-
-    return offset;
-}
-
-// dissect an open block
-static int dissect_nano_open_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *block_tree;
-
-    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_OPEN, ett_nano_block, NULL, "Open Block");
-
-    proto_tree_add_item(block_tree, hf_nano_block_hash_source, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_representative_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
-    offset += 64;
-
-    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
-    offset += 8;
-
-    return offset;
-}
-
-// dissect an change block
-static int dissect_nano_change_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *block_tree;
-
-    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_CHANGE, ett_nano_block, NULL, "Change Block");
-
-    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_representative_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
-    offset += 64;
-
-    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
-    offset += 8;
-
-    return offset;
-}
-
-// dissect a state block
-static int dissect_nano_state(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *block_tree;
-
-    block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_STATE, ett_nano_block, NULL, "State Block");
-
-    proto_tree_add_item(block_tree, hf_nano_block_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_hash_previous, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_representative_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_balance, tvb, offset, 16, ENC_NA);
-    offset += 16;
-
-    proto_tree_add_item(block_tree, hf_nano_block_link, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(block_tree, hf_nano_block_signature, tvb, offset, 64, ENC_NA);
-    offset += 64;
-
-    proto_tree_add_item(block_tree, hf_nano_block_work, tvb, offset, 8, ENC_NA);
-    offset += 8;
-
-    return offset;
-}
-
-// dissect a vote
-static int dissect_nano_vote(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *vote_tree;
-
-    vote_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 32+64+8, ett_nano_block, NULL, "Vote");
-
-    proto_tree_add_item(vote_tree, hf_nano_vote_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(vote_tree, hf_nano_vote_signature, tvb, offset, 64, ENC_NA);
-    offset += 64;
-
-    proto_tree_add_item(vote_tree, hf_nano_vote_sequence, tvb, offset, 8, ENC_LITTLE_ENDIAN);
-    offset += 8;
-
-    return offset;
-}
-
 static int dissect_nano_extensions_header() {
 
 }
@@ -476,6 +332,8 @@ static int dissect_nano_header(tvbuff_t *tvb, proto_tree *nano_tree, int offset,
     return offset;
 }
 
+static int hf_nano_extensions_item_count = -1;
+
 static gint ett_nano_confirm_req = -1;
 
 static int dissect_nano_confirm_req (tvbuff_t* tvb, packet_info* pinfo, proto_tree* nano_tree, int offset, guint64 extensions) {
@@ -486,7 +344,10 @@ static int dissect_nano_confirm_req (tvbuff_t* tvb, packet_info* pinfo, proto_tr
         // Req by hash
         int item_count = (extensions & 0xf000) >> 12;
 
-        proto_tree *telemetry_tree = proto_tree_add_subtree(nano_tree, tvb, offset, item_count * 64, ett_nano_confirm_req, NULL, "Confirm Req");
+        proto_tree *tree = proto_tree_add_subtree(nano_tree, tvb, offset, item_count * 64, ett_nano_confirm_req, NULL, "Confirm Req");
+        proto_tree_add_uint(tree, hf_nano_extensions_item_count, tvb, offset, 0, item_count);
+
+        offset += item_count * 64;
     } else {
 
     }
@@ -640,7 +501,7 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
 {
     proto_item *ti;
     proto_tree *nano_tree;
-    guint nano_packet_type, nano_block_type, offset;
+    guint nano_packet_type, nano_block_type;
     guint64 extensions;
 
     /* Check that the packet is long enough for it to belong to us. */
@@ -653,8 +514,7 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
     ti = proto_tree_add_item(tree, proto_nano, tvb, 0, -1, ENC_NA);
     nano_tree = proto_item_add_subtree(ti, ett_nano);
 
-    offset = dissect_nano_header(tvb, nano_tree, 0, &nano_packet_type, &extensions);
-
+    int offset = dissect_nano_header(tvb, nano_tree, 0, &nano_packet_type, &extensions);
     // call specific dissectors for specific packet types
     switch (nano_packet_type) {
         case NANO_PACKET_TYPE_TELEMETRY_ACK:
@@ -667,118 +527,60 @@ static int dissect_nano(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, voi
             return dissect_nano_keepalive(tvb, pinfo, nano_tree, offset);
         case NANO_PACKET_TYPE_CONFIRM_REQ:
             return dissect_nano_confirm_req(tvb, pinfo, nano_tree, offset, extensions);
-        case NANO_PACKET_TYPE_PUBLISH:
-        case NANO_PACKET_TYPE_CONFIRM_ACK:
-            // set the INFO header with more information
-            nano_block_type = (guint)((extensions >> 8) & 0xF);
-            col_add_fstr(pinfo->cinfo, COL_INFO, "%s (%s)",
-                val_to_str_const(nano_packet_type, VALS(nano_packet_type_strings), " "),
-                val_to_str(nano_block_type, VALS(nano_block_type_strings), "Unknown (%d)"));
-
-            // if it's a Confirm Ack packet, we first have a vote
-            if (nano_packet_type == NANO_PACKET_TYPE_CONFIRM_ACK) {
-                offset = dissect_nano_vote(tvb, nano_tree, offset);
-            }
-
-            // dissect the actual block
-            switch (nano_block_type) {
-                case NANO_BLOCK_TYPE_RECEIVE:
-                    dissect_nano_receive_block(tvb, nano_tree, offset);
-                    break;
-                case NANO_BLOCK_TYPE_SEND:
-                    dissect_nano_send_block(tvb, nano_tree, offset);
-                    break;
-                case NANO_BLOCK_TYPE_OPEN:
-                    dissect_nano_open_block(tvb, nano_tree, offset);
-                    break;
-                case NANO_BLOCK_TYPE_CHANGE:
-                    dissect_nano_change_block(tvb, nano_tree, offset);
-                    break;
-                case NANO_BLOCK_TYPE_STATE:
-                    dissect_nano_state(tvb, nano_tree, offset);
-                    break;
-            }
-            break;
-
         default:
-            col_add_str(pinfo->cinfo, COL_INFO,
-                val_to_str(nano_packet_type, VALS(nano_packet_type_strings), "Unknown (%d)"));
+            col_add_str(pinfo->cinfo, COL_INFO, val_to_str(nano_packet_type, VALS(nano_packet_type_strings), "Unknown (%d)"));
     }
 
     return tvb_captured_length(tvb);
 }
 
-// dissect a bulk pull request
-static int dissect_nano_bulk_pull(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *vote_tree;
+static guint get_nano_message_len (packet_info *pinfo _U_, tvbuff_t *tvb, int offset, void *data _U_) {
+    guint nano_packet_type = (guint) tvb_get_guint8(tvb, offset + 5);
+    guint16 extensions = tvb_get_guint16(tvb, offset + 6, ENC_LITTLE_ENDIAN);
+    int block_type = (extensions & 0x0f00) >> 8;
+    
+    switch (nano_packet_type) {
+        case NANO_PACKET_TYPE_TELEMETRY_ACK:
+            return NANO_HEADER_LENGTH + 64 + 32 + 8 + 8 + 8 + 8 + 8 + 8 + 4 + 1 + 32 + 1 + 1 + 1 + 1 + 1 + 8 + 8;
+        case NANO_PACKET_TYPE_TELEMETRY_REQ:
+            return NANO_HEADER_LENGTH + 0;
+        case NANO_PACKET_TYPE_NODE_ID_HANDSHAKE:
+            {
+                guint32 is_query = extensions & 0x0001;
+                guint32 is_response = extensions & 0x0002;
+                guint message_len = 0;
 
-    vote_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 32+32, ett_nano_bulk_pull, NULL, "Bulk Pull");
+                if (is_query) message_len += 32;
+                if (is_response) message_len += 32 + 64;
 
-    proto_tree_add_item(vote_tree, hf_nano_bulk_pull_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
+                return NANO_HEADER_LENGTH + message_len;
+            }
+        case NANO_PACKET_TYPE_KEEPALIVE:
+            return NANO_HEADER_LENGTH + (16 + 2) * 8;
+        case NANO_PACKET_TYPE_CONFIRM_REQ:
+            {
+                if (block_type == NANO_BLOCK_TYPE_NOT_A_BLOCK) {
+                    // req by hash
+                    int item_count = (extensions & 0xf000) >> 12;
+                    return NANO_HEADER_LENGTH + item_count * 64;
+                } else {
+                    switch (block_type) {
+                        case NANO_BLOCK_TYPE_SEND:
+                            return NANO_HEADER_LENGTH + 32 + 32 + 16 + 64 + 8;
+                        case NANO_BLOCK_TYPE_RECEIVE:
+                            return NANO_HEADER_LENGTH + 32 + 32 + 64 + 8;
+                        case NANO_BLOCK_TYPE_OPEN:
+                            return NANO_HEADER_LENGTH + 32 + 32 + 32 + 64 + 8;
+                        case NANO_BLOCK_TYPE_CHANGE:
+                            return NANO_HEADER_LENGTH + 32 + 32 + 64 + 8;
+                        case NANO_BLOCK_TYPE_STATE:
+                            return NANO_HEADER_LENGTH + 32 + 32 + 32 + 16 + 32 + 64 + 8;
+                    }
+                }
+            }
+    }
 
-    proto_tree_add_item(vote_tree, hf_nano_bulk_pull_block_hash_end, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    return offset;
-}
-
-// dissect a frontier request
-static int dissect_nano_frontier_req(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *vote_tree;
-
-    vote_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 32+4+4, ett_nano_frontier_req, NULL, "Frontier Request");
-
-    proto_tree_add_item(vote_tree, hf_nano_frontier_req_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(vote_tree, hf_nano_frontier_req_age, tvb, offset, 4, ENC_LITTLE_ENDIAN);
-    offset += 4;
-
-    proto_tree_add_item(vote_tree, hf_nano_frontier_req_count, tvb, offset, 4, ENC_LITTLE_ENDIAN);
-    offset += 4;
-
-    return offset;
-}
-
-// dissect a bulk pull blocks request
-static int dissect_nano_bulk_pull_blocks(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *vote_tree;
-
-    vote_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 32+4+4, ett_nano_frontier_req, NULL, "Bulk Pull Blocks");
-
-    proto_tree_add_item(vote_tree, hf_nano_bulk_pull_blocks_min_hash, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(vote_tree, hf_nano_bulk_pull_blocks_max_hash, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(nano_tree, hf_nano_bulk_pull_blocks_mode, tvb, offset, 1, ENC_NA);
-    offset += 1;
-
-    proto_tree_add_item(vote_tree, hf_nano_bulk_pull_blocks_max_count, tvb, offset, 4, ENC_LITTLE_ENDIAN);
-    offset += 4;
-
-    return offset;
-}
-
-// dissect a frontier response entry
-static int dissect_nano_frontier(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
-{
-    proto_tree *frontier_tree;
-
-    frontier_tree = proto_tree_add_subtree(nano_tree, tvb, offset, 32+32, ett_nano_frontier, NULL, "Frontier");
-
-    proto_tree_add_item(frontier_tree, hf_nano_frontier_account, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    proto_tree_add_item(frontier_tree, hf_nano_frontier_head_hash, tvb, offset, 32, ENC_NA);
-    offset += 32;
-
-    return offset;
+    return tvb_captured_length(tvb) - offset;
 }
 
 // dissect a Nano bootstrap packet (TCP)
@@ -788,7 +590,7 @@ static int dissect_nano_tcp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
     col_set_str(pinfo->cinfo, COL_PROTOCOL, "Nano");
     col_clear(pinfo->cinfo, COL_INFO);
 
-    dissect_nano(tvb, pinfo, tree, data);
+    tcp_dissect_pdus(tvb, pinfo, tree, TRUE, NANO_HEADER_LENGTH, get_nano_message_len, dissect_nano, data);
 
     return tvb_captured_length(tvb);
 }
@@ -830,6 +632,12 @@ void proto_register_nano(void)
             &hf_nano_extensions,
             { "Extensions Field", "nano.extensions",
             FT_UINT16, BASE_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_extensions_item_count,
+            { "Item Count", "nano.extensions.item_count",
+            FT_UINT16, BASE_DEC_HEX, NULL, 0x00,
             NULL, HFILL }
         },
         {
