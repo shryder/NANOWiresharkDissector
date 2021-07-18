@@ -903,13 +903,45 @@ static int dissect_nano_headerless_bulk_pull_response (tvbuff_t* tvb, packet_inf
     return offset;
 }
 
+static int dissect_nano_headerless_bulk_push_body (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, struct nano_session_state* session_state) {
+    append_info_col(pinfo->cinfo, "Bulk Push Data");
+
+    int block_type = tvb_get_guint8(tvb, 0);
+
+    int total_size = 1;
+    if (block_type != NANO_BLOCK_TYPE_NOT_A_BLOCK) {
+        total_size += get_block_type_size(block_type);
+    }
+
+    int offset = 0;
+    proto_tree *bulk_push_response_tree = proto_tree_add_subtree(tree, tvb, 0, total_size, ett_nano_bulk_pull_response, NULL, "Bulk Push Data");
+
+    proto_tree_add_item(bulk_push_response_tree, hf_nano_bulk_pull_response_block_type, tvb, offset, 1, ENC_NA);
+    offset += 1;
+
+    if (block_type == NANO_BLOCK_TYPE_NOT_A_BLOCK) {
+        col_append_fstr(pinfo->cinfo, COL_INFO, " [BULK PUSH END]");
+        session_state->client_packet_type = NANO_PACKET_TYPE_NOT_A_TYPE;
+    } else {
+        offset += dissect_nano_block(block_type, tvb, bulk_push_response_tree, offset);
+        col_append_fstr(pinfo->cinfo, COL_INFO, " (%s Block)", val_to_str(block_type, VALS(nano_block_type_strings), "Unknown (%d)"));
+    }
+
+    return offset;
+}
+
 static int dissect_headerless_packet_client (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, struct nano_session_state* session_state) {
+    switch (session_state->client_packet_type) {
+        case NANO_PACKET_TYPE_BULK_PUSH:
+            return dissect_nano_headerless_bulk_push_body(tvb, pinfo, tree, session_state);
+    }
+
     append_info_col(pinfo->cinfo, "UNKNOWN HEADERLESS [CLIENT] Packet");
     return 0;
 }
 
 static int dissect_headerless_packet_server (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, struct nano_session_state* session_state) {
-    switch (session_state->client_packet_type) 	{
+    switch (session_state->client_packet_type) {
         case NANO_PACKET_TYPE_FRONTIER_REQ:
             return dissect_nano_headerless_frontier_response(tvb, pinfo, tree, session_state);
         case NANO_PACKET_TYPE_BULK_PULL:
@@ -936,6 +968,7 @@ static int dissect_headerless_packet (tvbuff_t* tvb, packet_info* pinfo, proto_t
 static int does_prev_packet_expect_headerless_response (struct nano_session_state* session_state) {
     switch (session_state->client_packet_type) 	{
         case NANO_PACKET_TYPE_BULK_PULL:
+        case NANO_PACKET_TYPE_BULK_PUSH:
         case NANO_PACKET_TYPE_FRONTIER_REQ:
             return 1;
     }
