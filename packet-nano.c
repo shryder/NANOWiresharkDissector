@@ -179,23 +179,6 @@ void append_info_col(column_info *cinfo, const gchar *format, ...) {
 //
 // Dissect Blocks
 //
-static int dissect_nano_block (int block_type, tvbuff_t* tvb, proto_tree* tree, int offset) {
-    switch (block_type) {
-        case NANO_BLOCK_TYPE_RECEIVE:
-            return dissect_nano_receive_block(tvb, tree, offset);
-        case NANO_BLOCK_TYPE_OPEN:
-            return dissect_nano_open_block(tvb, tree, offset);
-        case NANO_BLOCK_TYPE_SEND:
-            return dissect_nano_send_block(tvb, tree, offset);
-        case NANO_BLOCK_TYPE_STATE:
-            return dissect_nano_state(tvb, tree, offset);
-        case NANO_BLOCK_TYPE_CHANGE:
-            return dissect_nano_change_block(tvb, tree, offset);
-    }
-
-    return 0;
-}
-
 static int dissect_nano_receive_block(tvbuff_t *tvb, proto_tree *nano_tree, int offset) {
     proto_tree *block_tree = proto_tree_add_subtree(nano_tree, tvb, offset, NANO_BLOCK_SIZE_RECEIVE, ett_nano_block, NULL, "Receive Block");
 
@@ -301,6 +284,23 @@ static int dissect_nano_state(tvbuff_t *tvb, proto_tree *nano_tree, int offset)
     offset += 8;
 
     return offset;
+}
+
+static int dissect_nano_block (int block_type, tvbuff_t* tvb, proto_tree* tree, int offset) {
+    switch (block_type) {
+        case NANO_BLOCK_TYPE_RECEIVE:
+            return dissect_nano_receive_block(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_OPEN:
+            return dissect_nano_open_block(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_SEND:
+            return dissect_nano_send_block(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_STATE:
+            return dissect_nano_state(tvb, tree, offset);
+        case NANO_BLOCK_TYPE_CHANGE:
+            return dissect_nano_change_block(tvb, tree, offset);
+    }
+
+    return 0;
 }
 
 static int get_block_type_size (int block_type) {
@@ -497,7 +497,7 @@ static int hf_nano_confirm_ack_vote_common_account = -1;
 static int hf_nano_confirm_ack_vote_common_signature = -1;
 static int hf_nano_confirm_ack_vote_common_sequence = -1;
 
-static int dissect_nano_vote_common (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, int offset) {
+static int dissect_nano_vote_common (tvbuff_t* tvb, packet_info* pinfo _U_, proto_tree* tree, int offset) {
     proto_tree* vote_tree = proto_tree_add_subtree(tree, tvb, offset, 32 + 64 + 8, ett_nano_vote_common, NULL, "Vote Common");
 
     proto_tree_add_item(vote_tree, hf_nano_confirm_ack_vote_common_account, tvb, offset, 32, ENC_NA);
@@ -600,7 +600,7 @@ static int dissect_nano_confirm_req (tvbuff_t* tvb, packet_info* pinfo, proto_tr
 //
 // Dissect Telemetry Req
 //
-static int dissect_nano_telemetry_req(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset, guint64 extensions) {
+static int dissect_nano_telemetry_req(packet_info *pinfo) {
     append_info_col(pinfo->cinfo, "Telemetry Req");
 
     return 0;
@@ -770,7 +770,7 @@ static int hf_nano_bulk_pull_extended_zero = -1;
 static int hf_nano_bulk_pull_extended_count = -1;
 static int hf_nano_bulk_pull_extended_reserved = -1;
 
-static int dissect_nano_bulk_pull_request (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, int offset, int extensions) {
+static int dissect_nano_bulk_pull_request (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, int offset, guint64 extensions) {
     append_info_col(pinfo->cinfo, "Bulk Pull Request");
 
     int total_body_size = 32 + 32;
@@ -809,7 +809,7 @@ static int hf_nano_bulk_pull_account_public_key = -1;
 static int hf_nano_bulk_pull_account_minimum_amount = -1;
 static int hf_nano_bulk_pull_account_flags = -1;
 
-static int dissect_nano_bulk_pull_account (tvbuff_t* tvb, packet_info* pinfo, proto_tree* tree, int offset) {
+static int dissect_nano_bulk_pull_account (tvbuff_t* tvb, packet_info* pinfo _U_, proto_tree* tree, int offset) {
     proto_tree *bulk_pull_tree = proto_tree_add_subtree(tree, tvb, offset, 32 + 16 + 1, ett_nano_bulk_pull_account, NULL, "Bulk Pull Account");
 
     proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_public_key, tvb, offset, 32, ENC_NA);
@@ -1010,7 +1010,7 @@ static int dissect_nano (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
         case NANO_PACKET_TYPE_TELEMETRY_ACK:
             return dissect_nano_telemetry_ack(tvb, pinfo, nano_tree, offset, extensions);
         case NANO_PACKET_TYPE_TELEMETRY_REQ:
-            return dissect_nano_telemetry_req(tvb, pinfo, nano_tree, offset, extensions);
+            return dissect_nano_telemetry_req(pinfo);
         case NANO_PACKET_TYPE_NODE_ID_HANDSHAKE:
             return dissect_nano_node_id_handshake(tvb, pinfo, nano_tree, offset, extensions);
         case NANO_PACKET_TYPE_KEEPALIVE:
