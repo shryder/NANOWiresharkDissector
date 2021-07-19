@@ -1261,440 +1261,440 @@ void proto_register_nano(void)
     static hf_register_info hf[] = {
         {
             &hf_nano_magic_number,
-        { "Magic Number", "nano.magic_number",
-        FT_STRING, STR_ASCII, NULL, 0x00,
-        "Nano Protocol Magic Number", HFILL }
+            { "Magic Number", "nano.magic_number",
+            FT_STRING, STR_ASCII, NULL, 0x00,
+            "Nano Protocol Magic Number", HFILL }
         },
         {
             &hf_nano_version_max,
-        { "Maximum Version", "nano.version_max",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        "Maximum Supported Protocol Version", HFILL }
+            { "Maximum Version", "nano.version_max",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            "Maximum Supported Protocol Version", HFILL }
         },
         {
             &hf_nano_version_using,
-        { "Using Version", "nano.version_using",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        "Used Protocol Version", HFILL }
+            { "Using Version", "nano.version_using",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            "Used Protocol Version", HFILL }
         },
         {
             &hf_nano_version_min,
-        { "Minimum Version", "nano.version_min",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        "Minimum Supported Protocol Version", HFILL }
+            { "Minimum Version", "nano.version_min",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            "Minimum Supported Protocol Version", HFILL }
         },
         {
             &hf_nano_packet_type,
-        { "Packet Type", "nano.packet_type",
-        FT_UINT8, BASE_DEC_HEX, VALS(nano_packet_type_strings), 0x00,
-        NULL, HFILL }
+            { "Packet Type", "nano.packet_type",
+            FT_UINT8, BASE_DEC_HEX, VALS(nano_packet_type_strings), 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_extensions,
-        { "Extensions Field", "nano.extensions",
-        FT_UINT16, BASE_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Extensions Field", "nano.extensions",
+            FT_UINT16, BASE_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_extensions_item_count,
-        { "Item Count", "nano.extensions.item_count",
-        FT_UINT16, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Item Count", "nano.extensions.item_count",
+            FT_UINT16, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_node_id_handshake_is_query,
-        { "Is Request", "nano.node_id_handshake.is_query",
-        FT_BOOLEAN, BASE_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Is Request", "nano.node_id_handshake.is_query",
+            FT_BOOLEAN, BASE_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_node_id_handshake_is_response,
-        { "Is Response", "nano.node_id_handshake.is_response",
-        FT_BOOLEAN, BASE_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Is Response", "nano.node_id_handshake.is_response",
+            FT_BOOLEAN, BASE_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_node_id_handshake_query_cookie,
-        { "Cookie", "nano.node_id_handshake.cookie",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Cookie", "nano.node_id_handshake.cookie",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_node_id_handshake_response_account,
-        { "Response Account", "nano.node_id_handshake.response_account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Response Account", "nano.node_id_handshake.response_account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_node_id_handshake_response_signature,
-        { "Response Signature", "nano.node_id_handshake.response_signature",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Response Signature", "nano.node_id_handshake.response_signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_extensions_block_type,
-        { "Block Type", "nano.extensions.block_type",
-        FT_UINT16, BASE_HEX, VALS(nano_block_type_strings), 0x0f00,
-        NULL, HFILL }
+            { "Block Type", "nano.extensions.block_type",
+            FT_UINT16, BASE_HEX, VALS(nano_block_type_strings), 0x0f00,
+            NULL, HFILL }
         },
         {
             &hf_nano_keepalive_peer_ip,
-        { "Peer IP Address", "nano.keepalive.peer_ip",
-        FT_IPv6, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Peer IP Address", "nano.keepalive.peer_ip",
+            FT_IPv6, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_keepalive_peer_port,
-        { "Peer Port", "nano.keepalive.peer_port",
-        FT_UINT16, BASE_DEC, NULL, 0x00,
-        NULL, HFILL }
+            { "Peer Port", "nano.keepalive.peer_port",
+            FT_UINT16, BASE_DEC, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_hash_previous,
-        { "Previous Block Hash", "nano.block.hash_previous",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Previous Block Hash", "nano.block.hash_previous",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_hash_source,
-        { "Source Block Hash", "nano.block.hash_source",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Source Block Hash", "nano.block.hash_source",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_signature,
-        { "Signature", "nano.block.signature",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Signature", "nano.block.signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_work,
-        { "Work", "nano.block.work",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Work", "nano.block.work",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_destination_account,
-        { "Destination Account", "nano.block.destination_account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Destination Account", "nano.block.destination_account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_balance,
-        { "Balance", "nano.block.balance",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Balance", "nano.block.balance",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_account,
-        { "Account", "nano.block.account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.block.account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_representative_account,
-        { "Representative Account", "nano.block.representative_account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Representative Account", "nano.block.representative_account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_block_link,
-        { "Link", "nano.block.link",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Link", "nano.block.link",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_vote_account,
-        { "Account", "nano.vote.account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.vote.account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_vote_signature,
-        { "Signature", "nano.vote.signature",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Signature", "nano.vote.signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_vote_sequence,
-        { "Sequence", "nano.vote.sequence",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Sequence", "nano.vote.sequence",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account,
-        { "Account", "nano.bulk_pull.account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.bulk_pull.account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Telemetry Ack */
         {
             &hf_nano_telemetry_ack_signature,
-        { "Signature", "nano.telemetry_ack.signature",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Signature", "nano.telemetry_ack.signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_nodeid,
-        { "Node ID", "nano.telemetry_ack.nodeid",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Node ID", "nano.telemetry_ack.nodeid",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_blockcount,
-        { "Block Count", "nano.telemetry_ack.blockcount",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Block Count", "nano.telemetry_ack.blockcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_cementedcount,
-        { "Cemented Count", "nano.telemetry_ack.cementedcount",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Cemented Count", "nano.telemetry_ack.cementedcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_uncheckedcount,
-        { "Unchecked Count", "nano.telemetry_ack.uncheckedcount",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Unchecked Count", "nano.telemetry_ack.uncheckedcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_accountcount,
-        { "Account Count", "nano.telemetry_ack.accountcount",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Account Count", "nano.telemetry_ack.accountcount",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_bandwidthcap,
-        { "Bandwidth Cap", "nano.telemetry_ack.bandwidthcap",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Bandwidth Cap", "nano.telemetry_ack.bandwidthcap",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_uptime,
-        { "Uptime", "nano.telemetry_ack.uptime",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Uptime", "nano.telemetry_ack.uptime",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_peercount,
-        { "Peer Count", "nano.telemetry_ack.peercount",
-        FT_UINT32, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Peer Count", "nano.telemetry_ack.peercount",
+            FT_UINT32, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_protocolversion,
-        { "Protocol Version", "nano.telemetry_ack.protocolversion",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Protocol Version", "nano.telemetry_ack.protocolversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_genesisblock,
-        { "Genesis Block", "nano.telemetry_ack.genesisblock",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Genesis Block", "nano.telemetry_ack.genesisblock",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_majorversion,
-        { "Major Version", "nano.telemetry_ack.majorversion",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Major Version", "nano.telemetry_ack.majorversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_minorversion,
-        { "Minor Version", "nano.telemetry_ack.minorversion",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Minor Version", "nano.telemetry_ack.minorversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_patchversion,
-        { "Patch Version", "nano.telemetry_ack.patchversion",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Patch Version", "nano.telemetry_ack.patchversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_prereleaseversion,
-        { "Pre-Release Version", "nano.telemetry_ack.prereleaseversion",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Pre-Release Version", "nano.telemetry_ack.prereleaseversion",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_maker,
-        { "Maker", "nano.telemetry_ack.maker",
-        FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Maker", "nano.telemetry_ack.maker",
+            FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_timestamp,
-        { "Timestamp", "nano.telemetry_ack.timestamp",
-        FT_ABSOLUTE_TIME, ABSOLUTE_TIME_UTC, NULL, 0x00,
-        NULL, HFILL }
+            { "Timestamp", "nano.telemetry_ack.timestamp",
+            FT_ABSOLUTE_TIME, ABSOLUTE_TIME_UTC, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_telemetry_ack_activedifficulty,
-        { "Active Difficulty", "nano.telemetry_ack.activedifficulty",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Active Difficulty", "nano.telemetry_ack.activedifficulty",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Confirm Req */
         {
             &hf_nano_hash_pair_first,
-        { "First", "nano.confirm_req.hash_pair.first",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "First", "nano.confirm_req.hash_pair.first",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_hash_pair_second,
-        { "Second", "nano.confirm_req.hash_pair.second",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Second", "nano.confirm_req.hash_pair.second",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Bulk Pull Account */
         {
             &hf_nano_bulk_pull_account_public_key,
-        { "Account Public Key", "nano.bulk_pull_account.account_public_key",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account Public Key", "nano.bulk_pull_account.account_public_key",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account_minimum_amount,
-        { "Minimum Amount", "nano.bulk_pull_account.minimum_amount",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Minimum Amount", "nano.bulk_pull_account.minimum_amount",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account_flags,
-        { "Flags", "nano.bulk_pull_account.flags",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Flags", "nano.bulk_pull_account.flags",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Bulk Pull Account Response */
         {
             &hf_nano_bulk_pull_account_response_frontier_entry,
-        { "Frontier Entry", "nano.bulk_pull_account_response.frontier_entry",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Frontier Entry", "nano.bulk_pull_account_response.frontier_entry",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account_response_balance,
-        { "Balance", "nano.bulk_pull_account_response.balance",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Balance", "nano.bulk_pull_account_response.balance",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account_response_account_entry_hash,
-        { "Hash", "nano.bulk_pull_account_response.account_entry.hash",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Hash", "nano.bulk_pull_account_response.account_entry.hash",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account_response_account_entry_amount,
-        { "Amount", "nano.bulk_pull_account_response.account_entry.amount",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Amount", "nano.bulk_pull_account_response.account_entry.amount",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_account_response_account_entry_source,
-        { "Source", "nano.bulk_pull_account_response.account_entry.source",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Source", "nano.bulk_pull_account_response.account_entry.source",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Frontier Req */
         {
             &hf_nano_frontier_req_start_account,
-        { "Account", "nano.frontier_req.start_account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.frontier_req.start_account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_frontier_req_age,
-        { "Age", "nano.frontier_req.age",
-        FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
-        NULL, HFILL }
+            { "Age", "nano.frontier_req.age",
+            FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_frontier_req_count,
-        { "Count", "nano.frontier_req.count",
-        FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
-        NULL, HFILL }
+            { "Count", "nano.frontier_req.count",
+            FT_UINT32, BASE_HEX_DEC, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Frontier Response */
         {
             &hf_nano_frontier_response_account,
-        { "Account", "nano.frontier_response.account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.frontier_response.account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_frontier_response_frontier_hash,
-        { "Frontier Hash", "nano.frontier_response.frontier_hash",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Frontier Hash", "nano.frontier_response.frontier_hash",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Bulk Pull Request */
         {
             &hf_nano_bulk_pull_start,
-        { "Start Account", "nano.bulk_pull.start",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Start Account", "nano.bulk_pull.start",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_end,
-        { "End Account", "nano.bulk_pull.end",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "End Account", "nano.bulk_pull.end",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_extended_zero,
-        { "Account", "nano.bulk_pull.extended.zero",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.bulk_pull.extended.zero",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_extended_count,
-        { "Count", "nano.bulk_pull.extended.count",
-        FT_UINT32, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Count", "nano.bulk_pull.extended.count",
+            FT_UINT32, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_bulk_pull_extended_reserved,
-        { "Reserved", "nano.bulk_pull.extended.reserved",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Reserved", "nano.bulk_pull.extended.reserved",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         /* Bulk Pull Response */
         {
             &hf_nano_bulk_pull_response_block_type,
-        { "Block Type", "nano.bulk_pull.block_type",
-        FT_UINT8, BASE_DEC_HEX, VALS(nano_block_type_strings), 0x00,
-        NULL, HFILL }
+            { "Block Type", "nano.bulk_pull.block_type",
+            FT_UINT8, BASE_DEC_HEX, VALS(nano_block_type_strings), 0x00,
+            NULL, HFILL }
         },
         /* Confirm Ack */
         /* + Vote Common */
         {
             &hf_nano_confirm_ack_vote_common_account,
-        { "Account", "nano.confirm_ack.vote_common.account",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Account", "nano.confirm_ack.vote_common.account",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_confirm_ack_vote_common_signature,
-        { "Signature", "nano.confirm_ack.vote_common.signature",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Signature", "nano.confirm_ack.vote_common.signature",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         },
         {
             &hf_nano_confirm_ack_vote_common_sequence,
-        { "Sequence", "nano.confirm_ack.vote_common.sequence",
-        FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-        NULL, HFILL }
+            { "Sequence", "nano.confirm_ack.vote_common.sequence",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
         },
         /* + Vote By Hash */
         {
             &hf_nano_confirm_ack_hash,
-        { "Hash", "nano.confirm_ack.vote_by_hash.hash",
-        FT_BYTES, BASE_NONE, NULL, 0x00,
-        NULL, HFILL }
+            { "Hash", "nano.confirm_ack.vote_by_hash.hash",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
         }
     };
 
