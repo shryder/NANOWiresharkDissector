@@ -109,7 +109,7 @@ static const value_string nano_packet_type_strings[] = {
     { NANO_PACKET_TYPE_BULK_PULL, "Bulk Pull" },
     { NANO_PACKET_TYPE_BULK_PUSH, "Bulk Push" },
     { NANO_PACKET_TYPE_FRONTIER_REQ, "Frontier Req" },
-    { NANO_PACKET_TYPE_BULK_PULL_BLOCKS, "Bulk Pull Blocks" },
+    { NANO_PACKET_TYPE_BULK_PULL_BLOCKS, "Bulk Pull Blocks [DEPRECATED]" },
     { NANO_PACKET_TYPE_NODE_ID_HANDSHAKE, "Node ID Handshake" },
     { NANO_PACKET_TYPE_BULK_PULL_ACCOUNT, "Bulk Pull Account" },
     { NANO_PACKET_TYPE_TELEMETRY_REQ, "Telemetry Req" },
