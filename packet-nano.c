@@ -82,6 +82,7 @@ static gint ett_nano_bulk_pull_account = -1;
 static gint ett_nano_vote_common = -1;
 static gint ett_nano_confirm_ack_hashes = -1;
 static gint ett_nano_confirm_ack = -1;
+static gint ett_nano_bulk_pull_account_response = -1;
 
 #define NANO_PACKET_TYPE_INVALID 0
 #define NANO_PACKET_TYPE_NOT_A_TYPE 1
@@ -165,6 +166,8 @@ static const value_string nano_bulk_pull_blocks_mode_strings[] = {
 
 struct nano_session_state {
     int client_packet_type;
+    guint8 bulk_pull_account_request_flags;
+
     guint32 server_port;
 };
 
@@ -745,7 +748,6 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
     return offset;
 }
 
-
 //
 // Dissect Publish
 //
@@ -809,8 +811,10 @@ static int hf_nano_bulk_pull_account_public_key = -1;
 static int hf_nano_bulk_pull_account_minimum_amount = -1;
 static int hf_nano_bulk_pull_account_flags = -1;
 
-static int dissect_nano_bulk_pull_account (tvbuff_t* tvb, packet_info* pinfo _U_, proto_tree* tree, int offset) {
-    proto_tree *bulk_pull_tree = proto_tree_add_subtree(tree, tvb, offset, 32 + 16 + 1, ett_nano_bulk_pull_account, NULL, "Bulk Pull Account");
+static int dissect_nano_bulk_pull_account_request (tvbuff_t* tvb, packet_info* pinfo _U_, proto_tree* tree, int offset, struct nano_session_state* session_state) {
+    append_info_col(pinfo->cinfo, "Bulk Pull Account Request");
+
+    proto_tree *bulk_pull_tree = proto_tree_add_subtree(tree, tvb, offset, 32 + 16 + 1, ett_nano_bulk_pull_account, NULL, "Bulk Pull Account Request");
 
     proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_public_key, tvb, offset, 32, ENC_NA);
     offset += 32;
@@ -818,8 +822,72 @@ static int dissect_nano_bulk_pull_account (tvbuff_t* tvb, packet_info* pinfo _U_
     proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_minimum_amount, tvb, offset, 16, ENC_NA);
     offset += 16;
 
+    session_state->bulk_pull_account_request_flags = tvb_get_guint8(tvb, offset);
+
     proto_tree_add_item(bulk_pull_tree, hf_nano_bulk_pull_account_flags, tvb, offset, 1, ENC_NA);
     offset += 1;
+
+    return offset;
+}
+
+static int hf_nano_bulk_pull_account_response_frontier_entry = -1;
+static int hf_nano_bulk_pull_account_response_balance = -1;
+
+static int hf_nano_bulk_pull_account_response_account_entry_hash = -1;
+static int hf_nano_bulk_pull_account_response_account_entry_amount = -1;
+static int hf_nano_bulk_pull_account_response_account_entry_source = -1;
+
+static int dissect_nano_headerless_bulk_pull_account_response (tvbuff_t* tvb, packet_info* pinfo, proto_tree* nano_tree, struct nano_session_state* session_state) {
+    int offset = 0;
+    int total_size = 32 + 16;
+
+    guint8 flags = session_state->bulk_pull_account_request_flags;
+    int pending_address_only = flags == 0x01;
+    int pending_include_address = flags == 0x02;
+
+    if (!pending_address_only) {
+        total_size += 32 + 16;
+    }
+
+    if (pending_address_only || pending_include_address) {
+        total_size += 32;
+    }
+
+    append_info_col(pinfo->cinfo, "Bulk Pull Account Response");
+
+    proto_tree *tree = proto_tree_add_subtree(nano_tree, tvb, 0, total_size, ett_nano_bulk_pull_account_response, NULL, "Bulk Pull Account Response");
+
+    //
+    // frontier_balance_entry
+    //
+    proto_tree_add_item(tree, hf_nano_bulk_pull_account_response_frontier_entry, tvb, offset, 32, ENC_NA);
+    offset += 32;
+
+    proto_tree_add_item(tree, hf_nano_bulk_pull_account_response_balance, tvb, offset, 16, ENC_NA);
+    offset += 16;
+
+    //
+    // pending_entry
+    //
+    if (!pending_address_only) {
+        guint32 frontier_hash = tvb_get_guint32(tvb, offset, ENC_NA);
+
+        proto_tree_add_item(tree, hf_nano_bulk_pull_account_response_account_entry_hash, tvb, offset, 32, ENC_NA);
+        offset += 32;
+
+        proto_tree_add_item(tree, hf_nano_bulk_pull_account_response_account_entry_amount, tvb, offset, 16, ENC_NA);
+        offset += 16;
+
+        // check if we're done with the responses
+        if (frontier_hash == 0) {
+            session_state->client_packet_type = NANO_PACKET_TYPE_INVALID;
+        }
+    }
+
+    if (pending_address_only || pending_include_address) {
+        proto_tree_add_item(tree, hf_nano_bulk_pull_account_response_account_entry_source, tvb, offset, 32, ENC_NA);
+        offset += 32;
+    }
 
     return offset;
 }
@@ -858,12 +926,11 @@ static int dissect_nano_headerless_frontier_response (tvbuff_t* tvb, packet_info
     int offset = 0;
     proto_tree *frontier_response_tree = proto_tree_add_subtree(tree, tvb, 0, 32 + 32, ett_nano_frontier_response, NULL, "Frontier Response");
 
-    guint32 account = tvb_get_guint32(tvb, 0, ENC_NA);
+    guint32 account = tvb_get_guint32(tvb, offset, ENC_NA);
     proto_tree_add_item(frontier_response_tree, hf_nano_frontier_response_account, tvb, offset, 32, ENC_NA);
     offset += 32;
 
-    guint32 frontier_hash = tvb_get_guint32(tvb, 0, ENC_NA);
-
+    guint32 frontier_hash = tvb_get_guint32(tvb, offset, ENC_NA);
     proto_tree_add_item(frontier_response_tree, hf_nano_frontier_response_frontier_hash, tvb, offset, 32, ENC_NA);
     offset += 32;
 
@@ -946,6 +1013,8 @@ static int dissect_headerless_packet_server (tvbuff_t* tvb, packet_info* pinfo, 
             return dissect_nano_headerless_frontier_response(tvb, pinfo, tree, session_state);
         case NANO_PACKET_TYPE_BULK_PULL:
             return dissect_nano_headerless_bulk_pull_response(tvb, pinfo, tree, session_state);
+        case NANO_PACKET_TYPE_BULK_PULL_ACCOUNT:
+            return dissect_nano_headerless_bulk_pull_account_response(tvb, pinfo, tree, session_state);
     }
 
     append_info_col(pinfo->cinfo, "UNKNOWN HEADERLESS [SERVER] Packet");
@@ -970,6 +1039,7 @@ static int does_prev_packet_expect_headerless_response (struct nano_session_stat
         case NANO_PACKET_TYPE_BULK_PULL:
         case NANO_PACKET_TYPE_BULK_PUSH:
         case NANO_PACKET_TYPE_FRONTIER_REQ:
+        case NANO_PACKET_TYPE_BULK_PULL_ACCOUNT:
             return 1;
     }
 
@@ -1022,7 +1092,7 @@ static int dissect_nano (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
         case NANO_PACKET_TYPE_PUBLISH:
             return dissect_nano_publish(tvb, pinfo, nano_tree, offset, extensions);
         case NANO_PACKET_TYPE_BULK_PULL_ACCOUNT:
-            return dissect_nano_bulk_pull_account(tvb, pinfo, nano_tree, offset);
+            return dissect_nano_bulk_pull_account_request(tvb, pinfo, nano_tree, offset, session_state);
         case NANO_PACKET_TYPE_FRONTIER_REQ:
             return dissect_nano_frontier_req(tvb, pinfo, nano_tree, offset);
         case NANO_PACKET_TYPE_BULK_PULL:
@@ -1036,7 +1106,6 @@ static int dissect_nano (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
 
 static guint get_nano_message_len (packet_info *pinfo _U_, tvbuff_t *tvb, int offset, void *data _U_) {
     struct nano_session_state *session_state = (struct nano_session_state*) data;
-
     // check if we're expecting a headerless packet
     if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL) {
         int nano_block_type = tvb_get_guint8(tvb, offset);
@@ -1056,24 +1125,35 @@ static guint get_nano_message_len (packet_info *pinfo _U_, tvbuff_t *tvb, int of
     if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PUSH) {
         // we're in the middle of a bulk push, so we expect a block type (uint8) and a block
         int nano_block_type = tvb_get_guint8(tvb, offset);
-
-        switch (nano_block_type) {
-            case NANO_BLOCK_TYPE_NOT_A_BLOCK:
-                return 1;
-            case NANO_BLOCK_TYPE_SEND:
-                return 1 + NANO_BLOCK_SIZE_SEND;
-            case NANO_BLOCK_TYPE_RECEIVE:
-                return 1 + NANO_BLOCK_SIZE_RECEIVE;
-            case NANO_BLOCK_TYPE_OPEN:
-                return 1 + NANO_BLOCK_SIZE_OPEN;
-            case NANO_BLOCK_TYPE_CHANGE:
-                return 1 + NANO_BLOCK_SIZE_CHANGE;
-            case NANO_BLOCK_TYPE_STATE:
-                return 1 + NANO_BLOCK_SIZE_STATE;
-            default:
-                // this is invalid
-                return tvb_captured_length(tvb) - offset;
+        if (nano_block_type == NANO_BLOCK_TYPE_NOT_A_BLOCK) {
+            return 1;
         }
+
+        int block_size = get_block_type_size(nano_block_type);
+        if (block_size == 0) {
+            // this is invalid
+            return tvb_captured_length(tvb) - offset;
+        }
+
+        return 1 + block_size;
+    }
+
+    if (session_state->client_packet_type == NANO_PACKET_TYPE_BULK_PULL_ACCOUNT) {
+        int size = 32 + 16;
+
+        guint8 flags = session_state->bulk_pull_account_request_flags;
+        int pending_address_only = flags == 0x01;
+        int pending_include_address = flags == 0x02;
+
+        if (!pending_address_only) {
+            size += 32 + 16;
+        }
+
+        if (pending_address_only || pending_include_address) {
+            size += 32;
+        }
+
+        return size;
     }
 
     // we expect a client command, this starts with a full Nano header
@@ -1138,6 +1218,13 @@ static guint get_nano_message_len (packet_info *pinfo _U_, tvbuff_t *tvb, int of
 
                 return NANO_HEADER_LENGTH + total_size;
             }
+        case NANO_PACKET_TYPE_PUBLISH:
+            {
+                int block_type = (extensions & 0x0f00) >> 8;
+                return NANO_HEADER_LENGTH + get_block_type_size(block_type);
+            }
+        case NANO_PACKET_TYPE_BULK_PULL_ACCOUNT:
+            return NANO_HEADER_LENGTH + 32 + 16 + 1;
     }
 
     return tvb_captured_length(tvb) - offset;
@@ -1526,6 +1613,37 @@ void proto_register_nano(void)
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
+        /* Bulk Pull Account Response */
+        {
+            &hf_nano_bulk_pull_account_response_frontier_entry,
+            { "Frontier Entry", "nano.bulk_pull_account_response.frontier_entry",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_bulk_pull_account_response_balance,
+            { "Balance", "nano.bulk_pull_account_response.balance",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_bulk_pull_account_response_account_entry_hash,
+            { "Hash", "nano.bulk_pull_account_response.account_entry.hash",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_bulk_pull_account_response_account_entry_amount,
+            { "Amount", "nano.bulk_pull_account_response.account_entry.amount",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_bulk_pull_account_response_account_entry_source,
+            { "Source", "nano.bulk_pull_account_response.account_entry.source",
+            FT_BYTES, BASE_NONE, NULL, 0x00,
+            NULL, HFILL }
+        },
         /* Frontier Req */
         {
             &hf_nano_frontier_req_start_account,
@@ -1622,7 +1740,7 @@ void proto_register_nano(void)
             { "Hash", "nano.confirm_ack.vote_by_hash.hash",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
-        },
+        }
     };
 
     static gint *ett[] = {
@@ -1657,7 +1775,9 @@ void proto_register_nano(void)
         &ett_nano_vote_common,
 
         &ett_nano_confirm_ack,
-        &ett_nano_confirm_ack_hashes
+        &ett_nano_confirm_ack_hashes,
+
+        &ett_nano_bulk_pull_account_response
     };
 
     proto_nano = proto_register_protocol("Nano Cryptocurrency Protocol", "Nano", "nano");
