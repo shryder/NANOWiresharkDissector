@@ -785,13 +785,13 @@ static int dissect_nano_frontier_req (tvbuff_t* tvb, packet_info* pinfo, proto_t
 
     proto_tree *frontier_req_tree = proto_tree_add_subtree(tree, tvb, offset, 32 + 4 + 4, ett_nano_frontier_req, NULL, "Frontier Req");
 
-    proto_tree_add_item(frontier_req_tree, hf_nano_frontier_req_start_account, tvb, offset, 32, ENC_NA);
+    proto_tree_add_item(frontier_req_tree, hf_nano_frontier_req_start_account, tvb, offset, 32, ENC_BIG_ENDIAN);
     offset += 32;
 
-    proto_tree_add_item(frontier_req_tree, hf_nano_frontier_req_age, tvb, offset, 4, ENC_NA);
+    proto_tree_add_item(frontier_req_tree, hf_nano_frontier_req_age, tvb, offset, 4, ENC_LITTLE_ENDIAN);
     offset += 4;
 
-    proto_tree_add_item(frontier_req_tree, hf_nano_frontier_req_count, tvb, offset, 4, ENC_NA);
+    proto_tree_add_item(frontier_req_tree, hf_nano_frontier_req_count, tvb, offset, 4, ENC_LITTLE_ENDIAN);
     offset += 4;
 
     return offset;
