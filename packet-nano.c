@@ -55,10 +55,6 @@ static int hf_nano_vote_sequence = -1;
 
 static int hf_nano_bulk_pull_account = -1;
 
-static int hf_nano_bulk_pull_blocks_max_hash = -1;
-
-static int hf_nano_bulk_pull_block_type = -1;
-
 static gint ett_nano = -1;
 static gint ett_nano_header = -1;
 static gint ett_nano_extensions = -1;
@@ -134,15 +130,6 @@ static const string_string nano_magic_numbers[] = {
     { "RC", "Nano Live Network" },
     { "RX", "Nano Test Network" },
     { 0, NULL }
-};
-
-#define NANO_BULK_PULL_BLOCKS_MODE_LIST_BLOCKS 0
-#define NANO_BULK_PULL_BLOCKS_MODE_CHECKSUM_BLOCKS 1
-
-static const value_string nano_bulk_pull_blocks_mode_strings[] = {
-    { NANO_BULK_PULL_BLOCKS_MODE_LIST_BLOCKS, "List Blocks" },
-    { NANO_BULK_PULL_BLOCKS_MODE_CHECKSUM_BLOCKS, "Checksum Blocks" },
-    { 0, NULL },
 };
 
 #define NANO_TCP_PORT 17075 /* Not IANA registered */
@@ -314,96 +301,7 @@ static int get_block_type_size (int block_type) {
 
     return 0;
 }
-//
-// Dissect Keepalive
-//
-static const char fast_strings[][4] = {
-    "0", "1", "2", "3", "4", "5", "6", "7",
-    "8", "9", "10", "11", "12", "13", "14", "15",
-    "16", "17", "18", "19", "20", "21", "22", "23",
-    "24", "25", "26", "27", "28", "29", "30", "31",
-    "32", "33", "34", "35", "36", "37", "38", "39",
-    "40", "41", "42", "43", "44", "45", "46", "47",
-    "48", "49", "50", "51", "52", "53", "54", "55",
-    "56", "57", "58", "59", "60", "61", "62", "63",
-    "64", "65", "66", "67", "68", "69", "70", "71",
-    "72", "73", "74", "75", "76", "77", "78", "79",
-    "80", "81", "82", "83", "84", "85", "86", "87",
-    "88", "89", "90", "91", "92", "93", "94", "95",
-    "96", "97", "98", "99", "100", "101", "102", "103",
-    "104", "105", "106", "107", "108", "109", "110", "111",
-    "112", "113", "114", "115", "116", "117", "118", "119",
-    "120", "121", "122", "123", "124", "125", "126", "127",
-    "128", "129", "130", "131", "132", "133", "134", "135",
-    "136", "137", "138", "139", "140", "141", "142", "143",
-    "144", "145", "146", "147", "148", "149", "150", "151",
-    "152", "153", "154", "155", "156", "157", "158", "159",
-    "160", "161", "162", "163", "164", "165", "166", "167",
-    "168", "169", "170", "171", "172", "173", "174", "175",
-    "176", "177", "178", "179", "180", "181", "182", "183",
-    "184", "185", "186", "187", "188", "189", "190", "191",
-    "192", "193", "194", "195", "196", "197", "198", "199",
-    "200", "201", "202", "203", "204", "205", "206", "207",
-    "208", "209", "210", "211", "212", "213", "214", "215",
-    "216", "217", "218", "219", "220", "221", "222", "223",
-    "224", "225", "226", "227", "228", "229", "230", "231",
-    "232", "233", "234", "235", "236", "237", "238", "239",
-    "240", "241", "242", "243", "244", "245", "246", "247",
-    "248", "249", "250", "251", "252", "253", "254", "255"
-};
 
-void ip_to_str_buf(const guint8 *ad, gchar *buf, const int buf_len)
-{
-    register gchar const *p;
-    register gchar *b=buf;
-
-    if (buf_len < WS_INET_ADDRSTRLEN) {
-        (void) g_strlcpy(buf, "[Buffer too small]", buf_len);  /* Let the unexpected value alert user */
-        return;
-    }
-
-    p=fast_strings[*ad++];
-    do {
-        *b++=*p;
-        p++;
-    } while(*p);
-    *b++='.';
-
-    p=fast_strings[*ad++];
-    do {
-        *b++=*p;
-        p++;
-    } while(*p);
-    *b++='.';
-
-    p=fast_strings[*ad++];
-    do {
-        *b++=*p;
-        p++;
-    } while(*p);
-    *b++='.';
-
-    p=fast_strings[*ad];
-    do {
-        *b++=*p;
-        p++;
-    } while(*p);
-    *b=0;
-}
-
-int ip6_to_str_buf(const ws_in6_addr *addr, gchar *buf, int buf_size)
-{
-    gchar addr_buf[WS_INET6_ADDRSTRLEN];
-    int len;
-
-    /* slightly more efficient than ip6_to_str_buf_with_pfx(addr, buf, buf_size, NULL) */
-    len = (int)g_strlcpy(buf, ws_inet_ntop6(addr, addr_buf, sizeof(addr_buf)), buf_size);     /* this returns len = strlen(addr_buf) */
-
-    if (len > buf_size - 1) { /* size minus nul terminator */
-        len = (int)g_strlcpy(buf, "[Buffer too small]", buf_size);  /* Let the unexpected value alert user */
-    }
-    return len;
-}
 
 // dissect the inside of a keepalive packet (that is, the neighbor nodes)
 static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree *nano_tree, int offset)
@@ -440,13 +338,6 @@ static int dissect_nano_keepalive(tvbuff_t *tvb, packet_info *pinfo, proto_tree 
     append_info_col(pinfo->cinfo, "Keepalive");
 
     return offset;
-}
-
-//
-// Dissect Message Header
-//
-static int dissect_nano_extensions_header() {
-
 }
 
 
@@ -1192,6 +1083,9 @@ static guint get_nano_message_len (packet_info *pinfo _U_, tvbuff_t *tvb, int of
                             return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_CHANGE;
                         case NANO_BLOCK_TYPE_STATE:
                             return NANO_HEADER_LENGTH + NANO_BLOCK_SIZE_STATE;
+                        default:
+                            // TODO: we should display an error here
+                            return 0;
                     }
                 }
             }
