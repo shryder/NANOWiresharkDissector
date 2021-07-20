@@ -704,13 +704,13 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
 
     // Is query
     if (is_query) {
-        col_append_str(pinfo->cinfo, COL_INFO, " (Query) ");
+        col_append_str(pinfo->cinfo, COL_INFO, " (Query)");
         total_body_size += 32;
     }
 
     // Is response
     if (is_response) {
-        col_append_str(pinfo->cinfo, COL_INFO, " (Response) ");
+        col_append_str(pinfo->cinfo, COL_INFO, " (Response)");
         total_body_size += 32 + 64;
     }
 
