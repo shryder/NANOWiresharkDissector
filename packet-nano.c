@@ -1052,11 +1052,14 @@ static int dissect_nano (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
         return 0;
     }
 
+#ifdef NANO_STRICT_MAGIC_BYTE
+    // TODO: we should probably make this is a warning
     char first_byte = tvb_get_gint8(tvb, 0);
     if (first_byte != 'R') {
         append_info_col(pinfo->cinfo, "ENCOUNTERED INVALID MAGIC NUMBER IN PACKET!");
         return 0;
     }
+#endif
 
     guint nano_packet_type;
     guint64 extensions;
