@@ -1578,13 +1578,13 @@ void proto_register_nano(void)
         /* Confirm Req */
         {
             &hf_nano_hash_pair_first,
-            { "First", "nano.confirm_req.hash_pair.first",
+            { "Hash", "nano.confirm_req.hash_pair.first",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
         {
             &hf_nano_hash_pair_second,
-            { "Second", "nano.confirm_req.hash_pair.second",
+            { "Root", "nano.confirm_req.hash_pair.second",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
