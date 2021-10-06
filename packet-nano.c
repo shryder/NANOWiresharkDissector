@@ -645,14 +645,14 @@ static int dissect_nano_telemetry_ack(tvbuff_t *tvb, packet_info *pinfo, proto_t
     proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_bandwidthcap, tvb, offset, 8, ENC_NA);
     offset += 8;
 
-    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_uptime, tvb, offset, 8, ENC_NA);
-    offset += 8;
-
     proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_peercount, tvb, offset, 4, ENC_NA);
     offset += 4;
 
     proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_protocolversion, tvb, offset, 1, ENC_NA);
     offset += 1;
+
+    proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_uptime, tvb, offset, 8, ENC_NA);
+    offset += 8;
 
     proto_tree_add_item(telemetry_tree, hf_nano_telemetry_ack_genesisblock, tvb, offset, 32, ENC_NA);
     offset += 32;
@@ -704,13 +704,13 @@ static int dissect_nano_node_id_handshake(tvbuff_t *tvb, packet_info *pinfo, pro
 
     // Is query
     if (is_query) {
-        col_append_str(pinfo->cinfo, COL_INFO, " (Query) ");
+        col_append_str(pinfo->cinfo, COL_INFO, " (Query)");
         total_body_size += 32;
     }
 
     // Is response
     if (is_response) {
-        col_append_str(pinfo->cinfo, COL_INFO, " (Response) ");
+        col_append_str(pinfo->cinfo, COL_INFO, " (Response)");
         total_body_size += 32 + 64;
     }
 
@@ -1052,11 +1052,14 @@ static int dissect_nano (tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
         return 0;
     }
 
+#ifdef NANO_STRICT_MAGIC_BYTE
+    // TODO: we should probably make this is a warning
     char first_byte = tvb_get_gint8(tvb, 0);
     if (first_byte != 'R') {
         append_info_col(pinfo->cinfo, "ENCOUNTERED INVALID MAGIC NUMBER IN PACKET!");
         return 0;
     }
+#endif
 
     guint nano_packet_type;
     guint64 extensions;
@@ -1507,12 +1510,6 @@ void proto_register_nano(void)
             NULL, HFILL }
         },
         {
-            &hf_nano_telemetry_ack_uptime,
-            { "Uptime", "nano.telemetry_ack.uptime",
-            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
-            NULL, HFILL }
-        },
-        {
             &hf_nano_telemetry_ack_peercount,
             { "Peer Count", "nano.telemetry_ack.peercount",
             FT_UINT32, BASE_DEC_HEX, NULL, 0x00,
@@ -1522,6 +1519,12 @@ void proto_register_nano(void)
             &hf_nano_telemetry_ack_protocolversion,
             { "Protocol Version", "nano.telemetry_ack.protocolversion",
             FT_UINT8, BASE_DEC_HEX, NULL, 0x00,
+            NULL, HFILL }
+        },
+        {
+            &hf_nano_telemetry_ack_uptime,
+            { "Uptime", "nano.telemetry_ack.uptime",
+            FT_UINT64, BASE_DEC_HEX, NULL, 0x00,
             NULL, HFILL }
         },
         {
@@ -1575,13 +1578,13 @@ void proto_register_nano(void)
         /* Confirm Req */
         {
             &hf_nano_hash_pair_first,
-            { "First", "nano.confirm_req.hash_pair.first",
+            { "Hash", "nano.confirm_req.hash_pair.first",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
         {
             &hf_nano_hash_pair_second,
-            { "Second", "nano.confirm_req.hash_pair.second",
+            { "Root", "nano.confirm_req.hash_pair.second",
             FT_BYTES, BASE_NONE, NULL, 0x00,
             NULL, HFILL }
         },
